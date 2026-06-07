@@ -1,0 +1,344 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f0f0f0;
+    display: flex;
+    gap: 32px;
+    padding: 24px;
+    font-family: Georgia, serif;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .phone {
+    width: 375px;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-notch {
+    height: 32px;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone-notch span {
+    width: 80px; height: 10px;
+    background: #333; border-radius: 8px; display: block;
+  }
+  .phone-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Lato', 'Helvetica Neue', sans-serif;
+    background: #fff;
+  }
+  .app-header {
+    background: #111;
+    color: #fff;
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .char-name {
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+  .char-meta { font-size: 10px; color: #aaa; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px; }
+  .hp-badge { text-align: right; }
+  .hp-badge .hp-num { font-size: 22px; font-weight: 700; color: #fff; line-height: 1; }
+  .hp-badge .hp-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* scrollable tabs */
+  .tabs {
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #999;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: 'Lato', sans-serif;
+    white-space: nowrap;
+  }
+  .tab.active { color: #111; border-bottom: 2px solid #111; font-weight: 700; }
+
+  .tab-content { flex: 1; overflow-y: auto; padding: 14px; }
+  .section-title {
+    font-family: 'Georgia', serif;
+    font-variant: small-caps;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #555;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    margin-top: 14px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  /* stat grid */
+  .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 12px; }
+  .stat-box { border: 1px solid #ddd; text-align: center; padding: 6px 2px 4px; border-radius: 4px; }
+  .stat-box .abbr { font-size: 8px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; }
+  .stat-box .score { font-size: 18px; font-weight: 700; line-height: 1.1; color: #111; }
+  .stat-box .mod { font-size: 10px; color: #555; }
+
+  /* inventory */
+  .weapon-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .weapon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .weapon-name { font-size: 13px; font-weight: 700; color: #111; font-family: Georgia, serif; font-variant: small-caps; }
+  .weapon-type { font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; }
+  .weapon-stats { display: flex; gap: 10px; }
+  .weapon-stat { text-align: center; }
+  .weapon-stat .val { font-size: 16px; font-weight: 700; color: #111; line-height: 1; }
+  .weapon-stat .lbl { font-size: 8px; text-transform: uppercase; color: #888; letter-spacing: 0.06em; margin-top: 1px; }
+  .weapon-formula { font-size: 9px; color: #aaa; margin-top: 5px; }
+
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    color: #333;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-qty { font-size: 11px; color: #888; }
+
+  .coins-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .coin { border: 1px solid #ddd; border-radius: 4px; text-align: center; padding: 6px 2px; }
+  .coin .val { font-size: 15px; font-weight: 700; color: #111; }
+  .coin .lbl { font-size: 8px; text-transform: uppercase; color: #999; letter-spacing: 0.04em; }
+
+  /* notas */
+  .note-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .note-tag {
+    display: inline-block;
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: #111;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-bottom: 5px;
+  }
+  .note-tag.lugar { background: #555; }
+  .note-title { font-size: 13px; font-weight: 700; color: #111; font-family: Georgia, serif; }
+  .note-body { font-size: 11px; color: #666; margin-top: 3px; line-height: 1.4; }
+
+  .add-btn {
+    width: 100%;
+    border: 1.5px dashed #ccc;
+    background: none;
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+    cursor: pointer;
+    margin-top: 4px;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .phone-home {
+    height: 28px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .home-bar { width: 100px; height: 4px; background: #ccc; border-radius: 4px; }
+
+  .side-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-right: 8px;
+    align-self: center;
+  }
+
+  .phone-wrapper { display: flex; align-items: flex-start; }
+</style>
+
+<h2>Layout actualizado — 6 tabs con scroll</h2>
+<p class="subtitle">Inventario y Notas agregados. Las tabs se scrollean horizontalmente. Dos vistas de ejemplo: Inventario y Notas.</p>
+
+<div style="display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; margin-top: 8px;">
+
+  <!-- Inventario -->
+  <div>
+    <p style="text-align:center; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:8px;">Tab: Inventario</p>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div>
+            <div class="char-name">Elarion</div>
+            <div class="char-meta">Bardo · Lore · Nv. 5</div>
+          </div>
+          <div class="hp-badge">
+            <div class="hp-num">32<span style="font-size:13px;color:#888">/38</span></div>
+            <div class="hp-label">HP</div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab">Stats</div>
+          <div class="tab">Combate</div>
+          <div class="tab">Magia</div>
+          <div class="tab active">Inventario</div>
+          <div class="tab">Feats</div>
+          <div class="tab">Notas</div>
+        </div>
+        <div class="tab-content">
+          <div class="section-title">Monedas</div>
+          <div class="coins-row">
+            <div class="coin"><div class="val">12</div><div class="lbl">PP</div></div>
+            <div class="coin"><div class="val">45</div><div class="lbl">GP</div></div>
+            <div class="coin"><div class="val">0</div><div class="lbl">EP</div></div>
+            <div class="coin"><div class="val">80</div><div class="lbl">SP</div></div>
+            <div class="coin"><div class="val">5</div><div class="lbl">CP</div></div>
+          </div>
+
+          <div class="section-title">Armas</div>
+          <div class="weapon-card">
+            <div class="weapon-header">
+              <div class="weapon-name">Rapier</div>
+              <div class="weapon-type">Melee · Finesse</div>
+            </div>
+            <div class="weapon-stats">
+              <div class="weapon-stat"><div class="val">+7</div><div class="lbl">Ataque</div></div>
+              <div class="weapon-stat"><div class="val">1d8+4</div><div class="lbl">Daño</div></div>
+              <div class="weapon-stat"><div class="val">Piercing</div><div class="lbl">Tipo</div></div>
+            </div>
+            <div class="weapon-formula">DEX mod (+4) + prof (+3) · 1d8 + DEX mod (+4)</div>
+          </div>
+          <div class="weapon-card">
+            <div class="weapon-header">
+              <div class="weapon-name">Hand Crossbow</div>
+              <div class="weapon-type">Ranged · Light</div>
+            </div>
+            <div class="weapon-stats">
+              <div class="weapon-stat"><div class="val">+5</div><div class="lbl">Ataque</div></div>
+              <div class="weapon-stat"><div class="val">1d6+2</div><div class="lbl">Daño</div></div>
+              <div class="weapon-stat"><div class="val">Piercing</div><div class="lbl">Tipo</div></div>
+            </div>
+            <div class="weapon-formula">DEX mod (+2) + prof (+3) · 1d6 + DEX mod (+2)</div>
+          </div>
+
+          <div class="section-title">Items</div>
+          <div class="item-row"><span>Lute (Bard's focus)</span><span class="item-qty">×1</span></div>
+          <div class="item-row"><span>Leather Armor</span><span class="item-qty">×1</span></div>
+          <div class="item-row"><span>Potion of Healing</span><span class="item-qty">×2</span></div>
+          <div class="item-row"><span>Dungeoneer's Pack</span><span class="item-qty">×1</span></div>
+          <button class="add-btn">+ agregar item</button>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Notas -->
+  <div>
+    <p style="text-align:center; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:8px;">Tab: Notas</p>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div>
+            <div class="char-name">Elarion</div>
+            <div class="char-meta">Bardo · Lore · Nv. 5</div>
+          </div>
+          <div class="hp-badge">
+            <div class="hp-num">32<span style="font-size:13px;color:#888">/38</span></div>
+            <div class="hp-label">HP</div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab">Stats</div>
+          <div class="tab">Combate</div>
+          <div class="tab">Magia</div>
+          <div class="tab">Inventario</div>
+          <div class="tab">Feats</div>
+          <div class="tab active">Notas</div>
+        </div>
+        <div class="tab-content">
+          <div class="section-title">NPCs</div>
+          <div class="note-card">
+            <span class="note-tag">NPC</span>
+            <div class="note-title">Morvaine el Gris</div>
+            <div class="note-body">Mago de la Torre Escarlata. Parece saber más de lo que dice. Posible aliado.</div>
+          </div>
+          <div class="note-card">
+            <span class="note-tag">NPC</span>
+            <div class="note-title">Ryla</div>
+            <div class="note-body">Tabernera en Puerta de Piedra. Nos debe un favor.</div>
+          </div>
+
+          <div class="section-title">Lugares</div>
+          <div class="note-card">
+            <span class="note-tag lugar">Lugar</span>
+            <div class="note-title">Torre Escarlata</div>
+            <div class="note-body">Al norte del bosque. Acceso por la puerta trasera con la contraseña "umbra".</div>
+          </div>
+          <div class="note-card">
+            <span class="note-tag lugar">Lugar</span>
+            <div class="note-title">Puerta de Piedra</div>
+            <div class="note-body">Ciudad amurallada. Mercado los jueves.</div>
+          </div>
+
+          <button class="add-btn">+ agregar nota</button>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px; text-align:center">¿Te convence esta estructura? Decime en la terminal</p>

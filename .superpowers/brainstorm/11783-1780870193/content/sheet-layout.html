@@ -1,0 +1,363 @@
+<style>
+  @import url('data:text/css,');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f0f0f0;
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    font-family: Georgia, serif;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .phone {
+    width: 375px;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .phone-notch {
+    height: 32px;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .phone-notch span {
+    width: 80px;
+    height: 10px;
+    background: #333;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .phone-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Lato', 'Helvetica Neue', sans-serif;
+    background: #fff;
+  }
+
+  .app-header {
+    background: #111;
+    color: #fff;
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .char-name {
+    font-family: 'Georgia', serif;
+    font-size: 20px;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    line-height: 1;
+  }
+
+  .char-meta {
+    font-size: 10px;
+    color: #aaa;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .hp-badge {
+    text-align: right;
+  }
+  .hp-badge .hp-num {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .hp-badge .hp-label {
+    font-size: 9px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #999;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    font-family: 'Lato', sans-serif;
+  }
+  .tab.active {
+    color: #111;
+    border-bottom: 2px solid #111;
+    font-weight: 700;
+  }
+
+  .tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 14px;
+  }
+
+  .section-title {
+    font-family: 'Georgia', serif;
+    font-variant: small-caps;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: #555;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    margin-top: 14px;
+  }
+  .section-title:first-child { margin-top: 0; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .stat-box {
+    border: 1px solid #ddd;
+    text-align: center;
+    padding: 6px 2px 4px;
+    border-radius: 4px;
+  }
+
+  .stat-box .abbr {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+  }
+
+  .stat-box .score {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #111;
+  }
+
+  .stat-box .mod {
+    font-size: 10px;
+    color: #555;
+  }
+
+  .combat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .combat-stat {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    padding: 8px 4px 5px;
+  }
+
+  .combat-stat .val {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+    line-height: 1;
+  }
+
+  .combat-stat .lbl {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .hp-edit {
+    border: 1.5px solid #111;
+    border-radius: 4px;
+    grid-column: span 1;
+  }
+  .hp-edit .val { color: #111; }
+
+  .skills-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+  }
+
+  .skill-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: #333;
+    padding: 2px 0;
+  }
+
+  .skill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid #999;
+    flex-shrink: 0;
+  }
+
+  .skill-dot.prof {
+    background: #111;
+    border-color: #111;
+  }
+
+  .skill-bonus {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    color: #111;
+    min-width: 22px;
+    text-align: right;
+  }
+
+  .phone-home {
+    height: 28px;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .home-bar {
+    width: 100px;
+    height: 4px;
+    background: #ccc;
+    border-radius: 4px;
+  }
+
+  .label { font-size: 8.5px; }
+</style>
+
+<h2>¿Cuál layout para la ficha te convence más?</h2>
+<p class="subtitle">Ambos usan la misma info — difieren en cómo organizan el espacio en el teléfono</p>
+
+<div class="cards" style="gap: 32px; align-items: flex-start;">
+
+  <!-- OPCIÓN A: tabs -->
+  <div class="card" data-choice="tabs" onclick="toggleSelect(this)" style="max-width:420px; padding: 16px 16px 20px;">
+    <div class="card-body" style="margin-bottom:12px;">
+      <h3>A — Tabs por sección</h3>
+      <p>Stats · Combate · Magia · Features. Navegás por tabs, cada una enfocada.</p>
+    </div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div>
+            <div class="char-name">Elarion</div>
+            <div class="char-meta">Bardo · College of Lore · Nv. 5</div>
+          </div>
+          <div class="hp-badge">
+            <div class="hp-num">32<span style="font-size:13px;color:#888">/38</span></div>
+            <div class="hp-label">HP</div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab active">Stats</div>
+          <div class="tab">Combate</div>
+          <div class="tab">Magia</div>
+          <div class="tab">Feats</div>
+        </div>
+        <div class="tab-content">
+          <div class="section-title">Ability Scores</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="abbr">STR</div><div class="score">10</div><div class="mod">+0</div></div>
+            <div class="stat-box"><div class="abbr">DEX</div><div class="score">14</div><div class="mod">+2</div></div>
+            <div class="stat-box"><div class="abbr">CON</div><div class="score">13</div><div class="mod">+1</div></div>
+            <div class="stat-box"><div class="abbr">INT</div><div class="score">12</div><div class="mod">+1</div></div>
+            <div class="stat-box"><div class="abbr">WIS</div><div class="score">10</div><div class="mod">+0</div></div>
+            <div class="stat-box"><div class="abbr">CHA</div><div class="score">18</div><div class="mod">+4</div></div>
+          </div>
+          <div class="section-title">Skills</div>
+          <div class="skills-list">
+            <div class="skill-row"><div class="skill-dot prof"></div><span>Persuasion</span><span class="skill-bonus">+7</span></div>
+            <div class="skill-row"><div class="skill-dot prof"></div><span>Performance</span><span class="skill-bonus">+7</span></div>
+            <div class="skill-row"><div class="skill-dot prof"></div><span>Deception</span><span class="skill-bonus">+7</span></div>
+            <div class="skill-row"><div class="skill-dot prof"></div><span>History</span><span class="skill-bonus">+4</span></div>
+            <div class="skill-row"><div class="skill-dot"></div><span>Insight</span><span class="skill-bonus">+3</span></div>
+            <div class="skill-row"><div class="skill-dot"></div><span>Athletics</span><span class="skill-bonus">+3</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- OPCIÓN B: scroll continuo -->
+  <div class="card" data-choice="scroll" onclick="toggleSelect(this)" style="max-width:420px; padding: 16px 16px 20px;">
+    <div class="card-body" style="margin-bottom:12px;">
+      <h3>B — Scroll continuo</h3>
+      <p>Todo en una sola página larga. Scrolleás para ver más. Más rápido para ojear todo.</p>
+    </div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div>
+            <div class="char-name">Elarion</div>
+            <div class="char-meta">Bardo · College of Lore · Nv. 5</div>
+          </div>
+          <div class="hp-badge">
+            <div class="hp-num">32<span style="font-size:13px;color:#888">/38</span></div>
+            <div class="hp-label">HP</div>
+          </div>
+        </div>
+        <div class="tab-content" style="overflow:hidden;">
+          <div class="section-title">Combate</div>
+          <div class="combat-row">
+            <div class="combat-stat hp-edit"><div class="val">32</div><div class="lbl">HP</div></div>
+            <div class="combat-stat"><div class="val">15</div><div class="lbl">AC</div></div>
+            <div class="combat-stat"><div class="val">30ft</div><div class="lbl">Speed</div></div>
+          </div>
+          <div class="section-title">Ability Scores</div>
+          <div class="stat-grid">
+            <div class="stat-box"><div class="abbr">STR</div><div class="score">10</div><div class="mod">+0</div></div>
+            <div class="stat-box"><div class="abbr">DEX</div><div class="score">14</div><div class="mod">+2</div></div>
+            <div class="stat-box"><div class="abbr">CON</div><div class="score">13</div><div class="mod">+1</div></div>
+            <div class="stat-box"><div class="abbr">INT</div><div class="score">12</div><div class="mod">+1</div></div>
+            <div class="stat-box"><div class="abbr">WIS</div><div class="score">10</div><div class="mod">+0</div></div>
+            <div class="stat-box"><div class="abbr">CHA</div><div class="score">18</div><div class="mod">+4</div></div>
+          </div>
+          <div class="section-title">Skills <span style="font-size:9px;color:#aaa;font-variant:normal;text-transform:none;font-family:sans-serif">— scroll para ver más ↓</span></div>
+          <div class="skills-list">
+            <div class="skill-row"><div class="skill-dot prof"></div><span>Persuasion</span><span class="skill-bonus">+7</span></div>
+            <div class="skill-row"><div class="skill-dot prof"></div><span>Performance</span><span class="skill-bonus">+7</span></div>
+            <div class="skill-row"><div class="skill-dot prof"></div><span>Deception</span><span class="skill-bonus">+7</span></div>
+            <div class="skill-row"><div class="skill-dot"></div><span>Insight</span><span class="skill-bonus">+3</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px; text-align:center">Hacé click en el que preferís y decime en la terminal</p>

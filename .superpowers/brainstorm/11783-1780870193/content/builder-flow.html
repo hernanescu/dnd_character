@@ -1,0 +1,521 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f0f0f0;
+    padding: 24px;
+    font-family: Georgia, serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .phone {
+    width: 375px;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-notch {
+    height: 32px; background: #111;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .phone-notch span { width: 80px; height: 10px; background: #333; border-radius: 8px; }
+  .phone-screen { display: flex; flex-direction: column; font-family: 'Lato','Helvetica Neue',sans-serif; }
+  .phone-home { height: 28px; background: #fafafa; display: flex; align-items: center; justify-content: center; }
+  .home-bar { width: 100px; height: 4px; background: #ccc; border-radius: 4px; }
+
+  .builder-header {
+    background: #111;
+    padding: 14px 16px 12px;
+    color: #fff;
+  }
+  .builder-title {
+    font-family: Georgia, serif;
+    font-variant: small-caps;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+  }
+  .step-indicator {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .step-dot {
+    height: 3px;
+    flex: 1;
+    background: #444;
+    border-radius: 2px;
+  }
+  .step-dot.done { background: #fff; }
+  .step-dot.active { background: #aaa; }
+
+  .step-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-top: 6px;
+  }
+
+  .builder-body { padding: 16px; min-height: 340px; display: flex; flex-direction: column; }
+
+  .step-title {
+    font-family: Georgia, serif;
+    font-variant: small-caps;
+    font-size: 15px;
+    color: #111;
+    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+  }
+  .step-sub { font-size: 10px; color: #888; margin-bottom: 14px; line-height: 1.4; }
+
+  .field-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #777;
+    margin-bottom: 4px;
+    margin-top: 10px;
+  }
+  .field-label:first-child { margin-top: 0; }
+
+  .mock-input {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: #333;
+    background: #fafafa;
+    font-family: 'Lato', sans-serif;
+  }
+
+  .pill-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill {
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11px;
+    color: #555;
+    cursor: pointer;
+  }
+  .pill.sel { background: #111; color: #fff; border-color: #111; }
+
+  .ability-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ability-box {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+    padding: 8px 4px 5px;
+  }
+  .ability-box .ab-label { font-size: 8px; text-transform: uppercase; color: #888; letter-spacing: 0.06em; }
+  .ability-box .ab-val { font-size: 20px; font-weight: 700; color: #111; line-height: 1.1; }
+  .ability-box .ab-mod { font-size: 10px; color: #555; }
+  .ability-box .ab-sel {
+    margin-top: 4px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 3px;
+    font-size: 10px;
+    padding: 2px 4px;
+    width: 100%;
+    color: #333;
+  }
+
+  .spell-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    color: #333;
+  }
+  .spell-row:last-child { border-bottom: none; }
+  .spell-check {
+    width: 16px; height: 16px;
+    border: 1.5px solid #999;
+    border-radius: 3px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .spell-check.on { background: #111; border-color: #111; }
+  .spell-check.on::after { content: '✓'; font-size: 10px; color: #fff; }
+  .spell-lvl {
+    font-size: 9px;
+    background: #eee;
+    border-radius: 2px;
+    padding: 1px 4px;
+    color: #777;
+    letter-spacing: 0.04em;
+  }
+  .spell-school { font-size: 9px; color: #aaa; margin-left: auto; }
+
+  .nav-row {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 16px;
+  }
+  .btn-back {
+    flex: 1;
+    border: 1px solid #ddd;
+    background: none;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+  }
+  .btn-next {
+    flex: 2;
+    border: none;
+    background: #111;
+    color: #fff;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .subclass-card {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .subclass-card.sel { border: 2px solid #111; }
+  .subclass-name {
+    font-family: Georgia, serif;
+    font-variant: small-caps;
+    font-size: 14px;
+    font-weight: bold;
+    color: #111;
+    margin-bottom: 3px;
+  }
+  .subclass-desc { font-size: 10px; color: #777; line-height: 1.4; }
+  .subclass-feat {
+    margin-top: 5px;
+    font-size: 9px;
+    color: #555;
+    background: #f5f5f5;
+    border-radius: 3px;
+    padding: 3px 6px;
+    display: inline-block;
+  }
+
+  .row-grid { display: flex; gap: 8px; }
+  .steps-legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #555;
+  }
+  .legend-num {
+    width: 22px; height: 22px;
+    background: #111;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .phones-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .phone-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .phone-col-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: #888; }
+</style>
+
+<h2>Flujo del Character Builder</h2>
+<p class="subtitle">5 pasos lineales en el teléfono — cada paso limpio, con navegación Atrás / Siguiente</p>
+
+<div class="steps-legend">
+  <div class="legend-item"><div class="legend-num">1</div>Info básica</div>
+  <div class="legend-item"><div class="legend-num">2</div>Ability scores</div>
+  <div class="legend-item"><div class="legend-num">3</div>Skills + Background</div>
+  <div class="legend-item"><div class="legend-num">4</div>Subclase</div>
+  <div class="legend-item"><div class="legend-num">5</div>Spells</div>
+</div>
+
+<div class="phones-row">
+
+  <!-- PASO 1 -->
+  <div class="phone-col">
+    <div class="phone-col-label">Paso 1 — Info básica</div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="builder-header">
+          <div class="builder-title">Nuevo Personaje</div>
+          <div class="step-indicator">
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+          </div>
+          <div class="step-label">Paso 1 de 5 — Información básica</div>
+        </div>
+        <div class="builder-body">
+          <div class="step-title">¿Quién sos?</div>
+          <div class="step-sub">Nombre, nivel inicial y raza de tu Bardo</div>
+          <div class="field-label">Nombre del personaje</div>
+          <input class="mock-input" value="Elarion" readonly>
+          <div class="field-label">Nivel</div>
+          <div class="pill-grid">
+            <div class="pill sel">1</div>
+            <div class="pill">2</div>
+            <div class="pill">3</div>
+            <div class="pill">4</div>
+            <div class="pill">5</div>
+            <div class="pill">6</div>
+            <div class="pill">7</div>
+            <div class="pill">8</div>
+          </div>
+          <div class="field-label">Raza</div>
+          <div class="pill-grid">
+            <div class="pill sel">Half-Elf</div>
+            <div class="pill">Human</div>
+            <div class="pill">Tiefling</div>
+            <div class="pill">Elf</div>
+            <div class="pill">Gnome</div>
+            <div class="pill">+</div>
+          </div>
+          <div class="nav-row">
+            <button class="btn-next" style="flex:1">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- PASO 2 -->
+  <div class="phone-col">
+    <div class="phone-col-label">Paso 2 — Ability scores</div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="builder-header">
+          <div class="builder-title">Nuevo Personaje</div>
+          <div class="step-indicator">
+            <div class="step-dot done"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+          </div>
+          <div class="step-label">Paso 2 de 5 — Ability scores</div>
+        </div>
+        <div class="builder-body">
+          <div class="step-title">Tus atributos</div>
+          <div class="step-sub">Standard array: 15, 14, 13, 12, 10, 8. Asigná cada valor a un atributo.</div>
+          <div class="ability-grid">
+            <div class="ability-box">
+              <div class="ab-label">STR</div>
+              <div class="ab-val">8</div>
+              <div class="ab-mod">–1</div>
+              <select class="ab-sel"><option>8</option></select>
+            </div>
+            <div class="ability-box">
+              <div class="ab-label">DEX</div>
+              <div class="ab-val">14</div>
+              <div class="ab-mod">+2</div>
+              <select class="ab-sel"><option>14</option></select>
+            </div>
+            <div class="ability-box">
+              <div class="ab-label">CON</div>
+              <div class="ab-val">13</div>
+              <div class="ab-mod">+1</div>
+              <select class="ab-sel"><option>13</option></select>
+            </div>
+            <div class="ability-box">
+              <div class="ab-label">INT</div>
+              <div class="ab-val">12</div>
+              <div class="ab-mod">+1</div>
+              <select class="ab-sel"><option>12</option></select>
+            </div>
+            <div class="ability-box">
+              <div class="ab-label">WIS</div>
+              <div class="ab-val">10</div>
+              <div class="ab-mod">+0</div>
+              <select class="ab-sel"><option>10</option></select>
+            </div>
+            <div class="ability-box" style="border:2px solid #111">
+              <div class="ab-label">CHA</div>
+              <div class="ab-val">15</div>
+              <div class="ab-mod">+2</div>
+              <select class="ab-sel"><option>15</option></select>
+            </div>
+          </div>
+          <div style="font-size:9px;color:#aaa;margin-top:8px">Half-Elf +2 CHA, +1 a dos más — aplicado automáticamente</div>
+          <div class="nav-row">
+            <button class="btn-back">← Atrás</button>
+            <button class="btn-next">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- PASO 3 -->
+  <div class="phone-col">
+    <div class="phone-col-label">Paso 3 — Skills + Background</div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="builder-header">
+          <div class="builder-title">Nuevo Personaje</div>
+          <div class="step-indicator">
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+            <div class="step-dot"></div>
+          </div>
+          <div class="step-label">Paso 3 de 5 — Skills y Background</div>
+        </div>
+        <div class="builder-body">
+          <div class="step-title">Habilidades</div>
+          <div class="step-sub">El Bardo elige 3 skills. Elegí también tu Background.</div>
+          <div class="field-label">Background</div>
+          <div class="pill-grid" style="margin-bottom:12px">
+            <div class="pill sel">Entertainer</div>
+            <div class="pill">Sage</div>
+            <div class="pill">Criminal</div>
+            <div class="pill">Noble</div>
+          </div>
+          <div class="field-label">Skills del Bardo (elegí 3)</div>
+          <div class="pill-grid">
+            <div class="pill sel">Persuasion</div>
+            <div class="pill sel">Performance</div>
+            <div class="pill sel">Deception</div>
+            <div class="pill">Insight</div>
+            <div class="pill">History</div>
+            <div class="pill">Arcana</div>
+            <div class="pill">+9 más</div>
+          </div>
+          <div style="font-size:9px;color:#aaa;margin-top:8px">Entertainer da: Acrobatics + Performance (ya incluidas)</div>
+          <div class="nav-row">
+            <button class="btn-back">← Atrás</button>
+            <button class="btn-next">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- PASO 4 -->
+  <div class="phone-col">
+    <div class="phone-col-label">Paso 4 — Subclase</div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="builder-header">
+          <div class="builder-title">Nuevo Personaje</div>
+          <div class="step-indicator">
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot active"></div>
+            <div class="step-dot"></div>
+          </div>
+          <div class="step-label">Paso 4 de 5 — Subclase</div>
+        </div>
+        <div class="builder-body" style="overflow-y:auto;max-height:340px">
+          <div class="step-title">Bard College</div>
+          <div class="step-sub">Disponible desde nivel 3. Elegí tu colegio (los feats se calculan solos).</div>
+          <div class="subclass-card sel">
+            <div class="subclass-name">College of Lore</div>
+            <div class="subclass-desc">Maestro del conocimiento y la magia. Cutting Words para debilitar enemigos.</div>
+            <div class="subclass-feat">Cutting Words · Bonus Magical Secrets · Additional Proficiencies</div>
+          </div>
+          <div class="subclass-card">
+            <div class="subclass-name">College of Valor</div>
+            <div class="subclass-desc">Bardo guerrero. Armor y armas marciales, Combat Inspiration.</div>
+            <div class="subclass-feat">Combat Inspiration · Extra Attack · Battle Magic</div>
+          </div>
+          <div class="subclass-card">
+            <div class="subclass-name">College of Glamour</div>
+            <div class="subclass-desc">Magia de encantamiento y presencia abrumadora.</div>
+            <div class="subclass-feat">Mantle of Inspiration · Enthralling Performance</div>
+          </div>
+          <div class="nav-row">
+            <button class="btn-back">← Atrás</button>
+            <button class="btn-next">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- PASO 5 -->
+  <div class="phone-col">
+    <div class="phone-col-label">Paso 5 — Spells</div>
+    <div class="phone">
+      <div class="phone-notch"><span></span></div>
+      <div class="phone-screen">
+        <div class="builder-header">
+          <div class="builder-title">Nuevo Personaje</div>
+          <div class="step-indicator">
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot done"></div>
+            <div class="step-dot active"></div>
+          </div>
+          <div class="step-label">Paso 5 de 5 — Spells</div>
+        </div>
+        <div class="builder-body">
+          <div class="step-title">Hechizos</div>
+          <div class="step-sub">Nivel 5: 2 cantrips + 6 spells conocidos. Spell save DC 15 · Ataque +7</div>
+          <div class="field-label">Cantrips (elegí 2)</div>
+          <div class="spell-row"><div class="spell-check on"></div><span>Vicious Mockery</span><span class="spell-lvl">C</span><span class="spell-school">Enchantment</span></div>
+          <div class="spell-row"><div class="spell-check on"></div><span>Minor Illusion</span><span class="spell-lvl">C</span><span class="spell-school">Illusion</span></div>
+          <div class="spell-row"><div class="spell-check"></div><span>Prestidigitation</span><span class="spell-lvl">C</span><span class="spell-school">Transmutation</span></div>
+          <div class="field-label">Spells conocidos (elegí 6)</div>
+          <div class="spell-row"><div class="spell-check on"></div><span>Healing Word</span><span class="spell-lvl">1</span><span class="spell-school">Evocation</span></div>
+          <div class="spell-row"><div class="spell-check on"></div><span>Hypnotic Pattern</span><span class="spell-lvl">3</span><span class="spell-school">Illusion</span></div>
+          <div class="spell-row"><div class="spell-check on"></div><span>Dimension Door</span><span class="spell-lvl">4</span><span class="spell-school">Conjuration</span></div>
+          <div class="spell-row"><div class="spell-check"></div><span>Charm Person</span><span class="spell-lvl">1</span><span class="spell-school">Enchantment</span></div>
+          <div class="nav-row">
+            <button class="btn-back">← Atrás</button>
+            <button class="btn-next" style="background:#111">Crear personaje ✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-home"><div class="home-bar"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:20px; text-align:center">¿Algún paso que cambiarías o agregarías? Decime en la terminal.</p>
