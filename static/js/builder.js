@@ -17,19 +17,93 @@ const CLASSES = [
 ];
 
 const RACES = [
-  { key: 'human',      name: 'Human',           asi: { str:1, dex:1, con:1, int:1, wis:1, cha:1 } },
-  { key: 'elf_high',   name: 'High Elf',        asi: { dex:2, int:1 } },
-  { key: 'elf_wood',   name: 'Wood Elf',        asi: { dex:2, wis:1 } },
-  { key: 'drow',       name: 'Drow',            asi: { dex:2, cha:1 } },
-  { key: 'dwarf_hill', name: 'Hill Dwarf',      asi: { con:2, wis:1 } },
-  { key: 'dwarf_mtn',  name: 'Mountain Dwarf',  asi: { str:2, con:2 } },
-  { key: 'halfling',   name: 'Halfling',        asi: { dex:2, cha:1 } },
-  { key: 'half_elf',   name: 'Half-Elf',        asi: { cha:2, dex:1, wis:1 } },
-  { key: 'half_orc',   name: 'Half-Orc',        asi: { str:2, con:1 } },
-  { key: 'gnome',      name: 'Gnome',           asi: { int:2, con:1 } },
-  { key: 'tiefling',   name: 'Tiefling',        asi: { cha:2, int:1 } },
-  { key: 'dragonborn', name: 'Dragonborn',      asi: { str:2, cha:1 } },
+  {
+    key:'human', name:'Human', speed:30, size:'Medium',
+    asi:{ str:1,dex:1,con:1,int:1,wis:1,cha:1 },
+    desc:'Versatile and ambitious. +1 to every ability score.',
+    traits:['Extra Language','Extra Skill (variant)'],
+  },
+  {
+    key:'elf_high', name:'High Elf', speed:30, size:'Medium',
+    asi:{ dex:2,int:1 },
+    desc:'Scholarly elves with a gift for magic. DEX +2, INT +1.',
+    traits:['Darkvision 60ft','Fey Ancestry','Trance','Cantrip (INT-based)','Extra Language'],
+  },
+  {
+    key:'elf_wood', name:'Wood Elf', speed:35, size:'Medium',
+    asi:{ dex:2,wis:1 },
+    desc:'Swift forest dwellers with keen senses. DEX +2, WIS +1.',
+    traits:['Darkvision 60ft','Fey Ancestry','Trance','Speed 35ft','Mask of the Wild'],
+  },
+  {
+    key:'drow', name:'Drow', speed:30, size:'Medium',
+    asi:{ dex:2,cha:1 },
+    desc:'Dark elves of the Underdark with innate magic. DEX +2, CHA +1.',
+    traits:['Superior Darkvision 120ft','Sunlight Sensitivity','Fey Ancestry','Dancing Lights / Faerie Fire / Darkness'],
+  },
+  {
+    key:'dwarf_hill', name:'Hill Dwarf', speed:25, size:'Medium',
+    asi:{ con:2,wis:1 },
+    desc:'Wise and hardy. CON +2, WIS +1, +1 HP per level.',
+    traits:['Darkvision 60ft','Poison Resilience (adv. + resistance)','Stonecunning','Dwarven Toughness (+1 HP/level)'],
+  },
+  {
+    key:'dwarf_mtn', name:'Mountain Dwarf', speed:25, size:'Medium',
+    asi:{ str:2,con:2 },
+    desc:'Strong mountain warriors. STR +2, CON +2.',
+    traits:['Darkvision 60ft','Poison Resilience','Stonecunning','Armor Training (light & medium)'],
+  },
+  {
+    key:'halfling', name:'Halfling', speed:25, size:'Small',
+    asi:{ dex:2,cha:1 },
+    desc:'Lucky and stealthy lightfoot halflings. DEX +2, CHA +1.',
+    traits:['Lucky (reroll 1s on d20)','Brave (adv. vs. fear)','Halfling Nimbleness','Naturally Stealthy'],
+  },
+  {
+    key:'half_elf', name:'Half-Elf', speed:30, size:'Medium',
+    asi:{ cha:2 },
+    flexAsi:{ count:2, points:1, exclude:['cha'] },
+    desc:'CHA +2, then +1 to two other ability scores of your choice. 2 bonus skill proficiencies.',
+    traits:['Darkvision 60ft','Fey Ancestry','Skill Versatility (2 skills)','Extra Language'],
+  },
+  {
+    key:'half_orc', name:'Half-Orc', speed:30, size:'Medium',
+    asi:{ str:2,con:1 },
+    desc:'Fierce and resilient. STR +2, CON +1.',
+    traits:['Darkvision 60ft','Intimidation proficiency','Relentless Endurance (1 HP once/rest)','Savage Attacks (extra crit die)'],
+  },
+  {
+    key:'gnome', name:'Gnome', speed:25, size:'Small',
+    asi:{ int:2,con:1 },
+    desc:'Clever forest gnomes with illusion magic. INT +2, CON +1.',
+    traits:['Darkvision 60ft','Gnome Cunning (adv. on INT/WIS/CHA saves vs. magic)','Minor Illusion cantrip','Speak with small beasts'],
+  },
+  {
+    key:'tiefling', name:'Tiefling', speed:30, size:'Medium',
+    asi:{ cha:2,int:1 },
+    desc:'Fiend-touched with innate dark magic. CHA +2, INT +1.',
+    traits:['Darkvision 60ft','Fire Resistance','Thaumaturgy / Hellish Rebuke / Darkness (innate)'],
+  },
+  {
+    key:'dragonborn', name:'Dragonborn', speed:30, size:'Medium',
+    asi:{ str:2,cha:1 },
+    desc:'Proud dragon-kin with a breath weapon. STR +2, CHA +1.',
+    traits:['Draconic Ancestry (choose dragon type at creation)','Breath Weapon (action, Dex/Con save)','Damage Resistance (matching ancestry)'],
+  },
 ];
+
+// Background source categories
+const BG_SOURCES = {
+  'PHB': ['acolyte','charlatan','criminal','entertainer','folk-hero','guild-artisan','hermit','noble','outlander','sage','sailor','soldier','urchin'],
+  'SCAG': ['city-watch','clan-crafter','cloistered-scholar','courtier','faction-agent','far-traveler','inheritor','knight-of-the-order','mercenary-veteran','uthgardt-tribe-member','waterdhavian-noble'],
+  'Ravnica': ['azorius-functionary','boros-legionnaire','dimir-operative','golgari-agent','gruul-anarch','izzet-engineer','orzhov-representative','rakdos-cultist','selesnya-initiate','simic-scientist'],
+  'Strixhaven': ['lorehold-student','prismari-student','quandrix-student','silverquill-student','witherbloom-student'],
+  'Spelljammer': ['astral-drifter','giant-foundling','wildspacer'],
+  'Witchlight': ['feylost','witchlight-hand'],
+  'Dragonlance': ['knight-of-solamnia','mage-of-high-sorcery'],
+  'Planescape': ['planar-philosopher','rewarded','rival-intern','ruined'],
+  'Acq. Inc.': ['celebrity-adventurers-scion','failed-merchant','grinner','house-agent'],
+};
 
 const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
@@ -47,9 +121,11 @@ let state = {
   abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
   abilityMode: 'array',
   background: '',
+  bgFilter: 'all',
   classSkills: [],
   subclass: '',
   choices: {},
+  flexAsiChoices: [],
   cantrips: [],
   spells: [],
   classData: null,
@@ -213,7 +289,7 @@ export async function initBuilder() {
     step: 1, name: '', classKey: 'bard', level: 1, race: '',
     abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
     abilityMode: 'array',
-    background: '', classSkills: [], subclass: '', choices: {},
+    background: '', bgFilter: 'all', classSkills: [], subclass: '', choices: {}, flexAsiChoices: [],
     cantrips: [], spells: [], classData: null, backgroundsData: null, spellData: null, spellFilter: '',
   };
   window.state = state;
@@ -264,6 +340,9 @@ function renderStep() {
 }
 
 function renderStep1(body) {
+  const selRace = RACES.find(r => r.key === state.race);
+  const asiStr = selRace ? Object.entries({ ...(selRace.asi||{})} ).map(([a,v])=>`${ABILITY_NAMES[a]} +${v}`).join(', ') : '';
+  const flexNote = selRace?.flexAsi ? ` + pick ${selRace.flexAsi.count}×+${selRace.flexAsi.points} (Step 2)` : '';
   body.innerHTML = `
     <div class="step-title">Basic Info</div>
     <div class="step-sub">Your character's name, class, level, and race.</div>
@@ -275,14 +354,44 @@ function renderStep1(body) {
     <div class="pills">${LEVEL_RANGE.map(l => `<div class="pill${state.level === l ? ' selected' : ''}" onclick="selectLevel(${l})">${l}</div>`).join('')}</div>
     <div class="field-label" style="margin-top:12px">Race</div>
     <div class="pills">${RACES.map(r => `<div class="pill${state.race === r.key ? ' selected' : ''}" onclick="selectRace('${r.key}')">${r.name}</div>`).join('')}</div>
+    ${selRace ? `
+    <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:4px">${escHtml(selRace.name)} <span style="font-weight:400;color:#888">· ${selRace.size} · Speed ${selRace.speed}ft</span></div>
+      <div style="color:var(--accent,#b48a40);margin-bottom:6px;font-size:11px">${escHtml(asiStr)}${escHtml(flexNote)}</div>
+      <div style="color:#888;margin-bottom:6px;font-size:11px">${escHtml(selRace.desc)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${selRace.traits.map(t=>`<span style="font-size:10px;background:var(--card-bg);border:1px solid var(--gray-light);border-radius:8px;padding:2px 8px">${escHtml(t)}</span>`).join('')}
+      </div>
+    </div>` : ''}
   `;
 }
 
 function renderStep2(body) {
   const mode = state.abilityMode;
   const race = RACES.find(r => r.key === state.race);
-  const asi = race ? race.asi : {};
+  const asi = race?.asi || {};
+  const flex = race?.flexAsi;
   const allAssigned = Object.values(state.abilityAssign).every(v => v !== null);
+
+  function racialBonusFor(ab) {
+    let b = asi[ab] || 0;
+    if (flex) b += state.flexAsiChoices.filter(x => x === ab).length * flex.points;
+    return b;
+  }
+
+  const flexPicker = flex ? `
+    <div style="margin-bottom:12px;padding:10px;background:var(--gray-bg);border-radius:6px">
+      <div class="field-label" style="margin-bottom:6px">Racial bonus: +${flex.points} to ${flex.count} abilities of choice (not CHA)</div>
+      <div class="pills">
+        ${ABILITIES.filter(ab => !flex.exclude.includes(ab)).map(ab => {
+          const picked = state.flexAsiChoices.filter(x => x === ab).length;
+          const dis = !picked && state.flexAsiChoices.length >= flex.count;
+          return `<div class="pill${picked ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="toggleFlexAsi('${ab}')">${ABILITY_NAMES[ab]}</div>`;
+        }).join('')}
+      </div>
+      <div style="font-size:10px;color:#888;margin-top:4px">${state.flexAsiChoices.length}/${flex.count} chosen</div>
+    </div>` : '';
+
   body.innerHTML = `
     <div class="step-title">Ability Scores</div>
     <div class="pills" style="margin-bottom:12px">
@@ -290,83 +399,105 @@ function renderStep2(body) {
       <div class="pill${mode === 'manual' ? ' selected' : ''}" onclick="setAbilityMode('manual')">Manual</div>
       <div class="pill${mode === 'roll' ? ' selected' : ''}" onclick="setAbilityMode('roll')">Roll</div>
     </div>
+    ${flexPicker}
     ${mode === 'array' ? `
     <div class="step-sub">Assign standard array (${STANDARD_ARRAY.join(', ')}). Racial bonuses apply automatically.</div>
     <div class="ability-assign-grid">
       ${ABILITIES.map(ab => {
-        const racialBonus = asi[ab] || 0;
+        const rb = racialBonusFor(ab);
         const currentVal = state.abilityAssign[ab];
         const usedValues = Object.values(state.abilityAssign).filter(v => v !== null);
         const options = STANDARD_ARRAY.map(v => {
           const isUsedByOther = usedValues.includes(v) && currentVal !== v;
           return `<option value="${v}" ${currentVal === v ? 'selected' : ''} ${isUsedByOther ? 'disabled' : ''}>${v}</option>`;
         }).join('');
-        return `
-          <div class="ability-assign-row">
-            <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
-            <select class="ability-assign-select" onchange="assignAbility('${ab}', +this.value)">
-              <option value="">—</option>
-              ${options}
-            </select>
-            ${racialBonus ? `<span class="racial-bonus">+${racialBonus}</span>` : ''}
-          </div>`;
+        return `<div class="ability-assign-row">
+          <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
+          <select class="ability-assign-select" onchange="assignAbility('${ab}', +this.value)">
+            <option value="">—</option>${options}
+          </select>
+          ${rb ? `<span class="racial-bonus">+${rb}</span>` : ''}
+        </div>`;
       }).join('')}
     </div>` : mode === 'manual' ? `
     <div class="step-sub">Enter scores directly (3–20). Racial bonuses apply automatically.</div>
     <div class="ability-assign-grid">
       ${ABILITIES.map(ab => {
-        const racialBonus = asi[ab] || 0;
+        const rb = racialBonusFor(ab);
         const v = state.abilityAssign[ab];
-        return `
-          <div class="ability-assign-row">
-            <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
-            <input class="input-field" type="number" min="3" max="20" value="${v !== null ? v : ''}" placeholder="8" oninput="assignAbility('${ab}', +this.value || null)" style="width:60px;text-align:center">
-            ${racialBonus ? `<span class="racial-bonus">+${racialBonus}</span>` : ''}
-          </div>`;
+        return `<div class="ability-assign-row">
+          <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
+          <input class="input-field" type="number" min="3" max="20" value="${v !== null ? v : ''}" placeholder="8" oninput="assignAbility('${ab}', +this.value || null)" style="width:60px;text-align:center">
+          ${rb ? `<span class="racial-bonus">+${rb}</span>` : ''}
+        </div>`;
       }).join('')}
     </div>` : `
-    <div class="step-sub">Click <strong>Roll All</strong> to generate scores (4d6 drop lowest). Reroll individually with 🎲.</div>
+    <div class="step-sub">Click <strong>Roll All</strong> to generate scores (4d6 drop lowest). Reroll individually with ↺.</div>
     <div class="ability-assign-grid">
       ${ABILITIES.map(ab => {
-        const racialBonus = asi[ab] || 0;
+        const rb = racialBonusFor(ab);
         const v = state.abilityAssign[ab];
-        return `
-          <div class="ability-assign-row">
-            <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
-            <div style="display:flex;align-items:center;gap:6px">
-              ${v !== null ? `<span style="font-size:18px;font-weight:700;min-width:24px;text-align:center">${v}</span>` : '<span style="min-width:24px"></span>'}
-              <button class="btn btn-sm btn-outline" onclick="rollAbility('${ab}')">🎲</button>
-            </div>
-            ${racialBonus ? `<span class="racial-bonus">+${racialBonus}</span>` : ''}
-          </div>`;
+        return `<div class="ability-assign-row">
+          <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:18px;font-weight:700;min-width:28px;text-align:center">${v !== null ? v : '—'}</span>
+            <button class="btn btn-sm btn-outline" onclick="rollAbility('${ab}')">↺</button>
+          </div>
+          ${rb ? `<span class="racial-bonus">+${rb}</span>` : ''}
+        </div>`;
       }).join('')}
-      <button class="btn btn-primary" onclick="rollAll()" style="margin-top:8px">Roll All</button>
+      <button class="btn btn-primary" onclick="rollAll()" style="margin-top:8px;width:100%">Roll All</button>
     </div>`}
     ${allAssigned ? `
-      <div style="padding:10px;background:var(--gray-bg);border-radius:4px;font-size:11px;color:var(--gray-dark);margin-top:8px">
-        Final scores: ${ABILITIES.map(ab => `${ABILITY_NAMES[ab]} ${(state.abilityAssign[ab] || 0) + (asi[ab] || 0)}`).join(' · ')}
-      </div>` : (mode === 'manual' ? '<div style="padding:6px;color:var(--gray-mid);font-size:11px;margin-top:6px">Enter a score for each ability (3–20).</div>' : '')}
+      <div style="padding:10px;background:var(--gray-bg);border-radius:4px;font-size:11px;margin-top:8px">
+        Final: ${ABILITIES.map(ab => `<b>${ABILITY_NAMES[ab]}</b> ${(state.abilityAssign[ab]||0)+racialBonusFor(ab)}`).join(' · ')}
+      </div>` : ''}
   `;
 }
 
+function bgSourceFor(key) {
+  for (const [src, keys] of Object.entries(BG_SOURCES)) {
+    if (keys.includes(key)) return src;
+  }
+  return 'Other';
+}
+
 function renderStep3(body) {
-  const bgKeys = Object.keys(state.backgroundsData);
+  const allBgKeys = Object.keys(state.backgroundsData);
+  const filter = state.bgFilter || 'all';
+  const allSources = ['all', ...Object.keys(BG_SOURCES), 'Other'];
+  const filteredKeys = filter === 'all' ? allBgKeys : allBgKeys.filter(k => bgSourceFor(k) === filter);
   const selectedBg = state.backgroundsData[state.background];
   const bgSkills = selectedBg ? selectedBg.skill_proficiencies : [];
+  const bgTools = selectedBg ? (selectedBg.tool_proficiencies || []) : [];
+  const bgLangs = selectedBg ? selectedBg.languages : 0;
+  const bgFeature = selectedBg ? selectedBg.feature : '';
   const available = state.classData.skill_choices.filter(s => !bgSkills.includes(s));
   const max = state.classData.skill_count;
   const clsName = className(state.classKey);
+
   body.innerHTML = `
     <div class="step-title">Background & Skills</div>
     <div class="step-sub">Background grants 2 skills automatically. Then choose ${max} ${clsName} skills.</div>
-    <div class="field-label">Background</div>
-    <div class="pills">${bgKeys.map(k => `<div class="pill${state.background === k ? ' selected' : ''}" onclick="selectBackground('${k}')">${state.backgroundsData[k].name}</div>`).join('')}</div>
-    ${selectedBg ? `<div style="font-size:11px;color:#555;margin:8px 0 12px">Skills: <b>${bgSkills.join(', ')}</b></div>` : ''}
-    <div class="field-label">${clsName} skills (choose ${max})</div>
+    <div class="field-label">Source</div>
+    <div class="pills" style="margin-bottom:8px">
+      ${allSources.map(s => `<div class="pill${filter===s?' selected':''}" style="font-size:11px" onclick="setBgFilter('${s}')">${s==='all'?'All':s}</div>`).join('')}
+    </div>
+    <div class="field-label">Background <span style="font-weight:400;color:#888">(${filteredKeys.length})</span></div>
+    <div class="pills">${filteredKeys.map(k => `<div class="pill${state.background===k?' selected':''}" onclick="selectBackground('${k}')">${state.backgroundsData[k].name}</div>`).join('')}</div>
+    ${selectedBg ? `
+    <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:4px">${escHtml(selectedBg.name)} <span style="font-weight:400;color:#888;font-size:10px">· ${bgSourceFor(state.background)}</span></div>
+      ${bgSkills.length ? `<div style="margin-bottom:3px"><span style="color:#888">Skills:</span> <b>${escHtml(bgSkills.join(', '))}</b></div>` : ''}
+      ${bgTools.length ? `<div style="margin-bottom:3px"><span style="color:#888">Tools:</span> ${escHtml(bgTools.join(', '))}</div>` : ''}
+      ${bgLangs ? `<div style="margin-bottom:3px"><span style="color:#888">Languages:</span> +${bgLangs} of choice</div>` : ''}
+      ${bgFeature ? `<div style="margin-top:4px;font-size:11px;color:#888">Feature: <i>${escHtml(bgFeature)}</i></div>` : ''}
+    </div>` : ''}
+    <div class="field-label" style="margin-top:12px">${clsName} skills (choose ${max})</div>
     <div class="pills">${available.map(s => {
       const sel = state.classSkills.includes(s);
       const disabled = !sel && state.classSkills.length >= max;
-      return `<div class="pill${sel ? ' selected' : ''}${disabled ? ' disabled' : ''}" onclick="${disabled ? '' : `toggleClassSkill('${s}')`}">${s}</div>`;
+      return `<div class="pill${sel?' selected':''}${disabled?' disabled':''}" onclick="${disabled?'':` toggleClassSkill('${s}')`}">${s}</div>`;
     }).join('')}</div>
   `;
 }
@@ -514,6 +645,10 @@ function cantripsAtLevel(lvl) {
   return table[Math.max(...Object.keys(table).map(Number).filter(k => k <= lvl))] || 2;
 }
 
+function roll4d6() {
+  const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
+  return rolls.sort((a, b) => a - b).slice(1).reduce((a, b) => a + b, 0);
+}
 function abilityMod(score) { return Math.floor((score - 10) / 2); }
 function fmtBonus(n) { return (n >= 0 ? '+' : '') + n; }
 function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -556,7 +691,16 @@ window.selectClass = async (k) => {
   renderStep();
 };
 window.selectLevel = (l) => { state.level = l; renderStep(); };
-window.selectRace = (k) => { state.race = k; renderStep(); };
+window.selectRace = (k) => { state.race = k; state.flexAsiChoices = []; renderStep(); };
+window.toggleFlexAsi = (ab) => {
+  const flex = RACES.find(r => r.key === state.race)?.flexAsi;
+  if (!flex) return;
+  const i = state.flexAsiChoices.indexOf(ab);
+  if (i >= 0) state.flexAsiChoices.splice(i, 1);
+  else if (state.flexAsiChoices.length < flex.count) state.flexAsiChoices.push(ab);
+  renderStep();
+};
+window.setBgFilter = (f) => { state.bgFilter = f; renderStep(); };
 window.selectBackground = (k) => {
   state.background = k;
   const bgSkills = state.backgroundsData[k].skill_proficiencies;
@@ -605,10 +749,12 @@ window.toggleSpell = (k, type) => {
 window.finishBuilder = async () => {
   if (!validateStep()) return;
   const race = RACES.find(r => r.key === state.race);
-  const asi = race ? race.asi : {};
+  const asi = race?.asi || {};
+  const flex = race?.flexAsi;
   const scores = {};
   for (const ab of ABILITIES) {
-    scores[ab] = (state.abilityAssign[ab] || 10) + (asi[ab] || 0);
+    const flexBonus = flex ? state.flexAsiChoices.filter(x => x === ab).length * flex.points : 0;
+    scores[ab] = (state.abilityAssign[ab] || 10) + (asi[ab] || 0) + flexBonus;
   }
   const level = state.level;
   const profBonus = Math.floor((level - 1) / 4) + 2;
@@ -642,9 +788,9 @@ window.finishBuilder = async () => {
     hp_max: Math.max(1, hpMax),
     hp_current: Math.max(1, hpMax),
     ac,
-    momentum: 2,
+    momentum: 0,
     supply: 5,
-    stress: 0,
+    stress: 5,
     choices: state.choices,
     features: [],
     weapons: [],
@@ -676,6 +822,10 @@ function validateStep() {
       for (const [ab, v] of Object.entries(state.abilityAssign)) {
         if (v < 3 || v > 20) { alert(`${ABILITY_NAMES[ab]} must be between 3 and 20.`); return false; }
       }
+    }
+    const flex = RACES.find(r => r.key === state.race)?.flexAsi;
+    if (flex && state.flexAsiChoices.length < flex.count) {
+      alert(`Choose ${flex.count} abilities for your racial +${flex.points} bonus.`); return false;
     }
   }
   if (s === 3) {
