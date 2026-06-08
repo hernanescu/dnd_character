@@ -1,15 +1,1046 @@
 {
-  "acolyte": { "name": "Acolyte", "skill_proficiencies": ["Insight", "Religion"], "tool_proficiencies": [], "languages": 2, "feature": "Shelter of the Faithful" },
-  "charlatan": { "name": "Charlatan", "skill_proficiencies": ["Deception", "Sleight of Hand"], "tool_proficiencies": ["Disguise kit", "Forgery kit"], "languages": 0, "feature": "False Identity" },
-  "criminal": { "name": "Criminal", "skill_proficiencies": ["Deception", "Stealth"], "tool_proficiencies": ["Thieves' tools", "Gaming set"], "languages": 0, "feature": "Criminal Contact" },
-  "entertainer": { "name": "Entertainer", "skill_proficiencies": ["Acrobatics", "Performance"], "tool_proficiencies": ["Disguise kit", "Musical instrument"], "languages": 0, "feature": "By Popular Demand" },
-  "folk_hero": { "name": "Folk Hero", "skill_proficiencies": ["Animal Handling", "Survival"], "tool_proficiencies": ["Artisan's tools", "Vehicles (land)"], "languages": 0, "feature": "Rustic Hospitality" },
-  "guild_artisan": { "name": "Guild Artisan", "skill_proficiencies": ["Insight", "Persuasion"], "tool_proficiencies": ["Artisan's tools"], "languages": 1, "feature": "Guild Membership" },
-  "hermit": { "name": "Hermit", "skill_proficiencies": ["Medicine", "Religion"], "tool_proficiencies": ["Herbalism kit"], "languages": 1, "feature": "Discovery" },
-  "noble": { "name": "Noble", "skill_proficiencies": ["History", "Persuasion"], "tool_proficiencies": ["Gaming set"], "languages": 1, "feature": "Position of Privilege" },
-  "outlander": { "name": "Outlander", "skill_proficiencies": ["Athletics", "Survival"], "tool_proficiencies": ["Musical instrument"], "languages": 1, "feature": "Wanderer" },
-  "sage": { "name": "Sage", "skill_proficiencies": ["Arcana", "History"], "tool_proficiencies": [], "languages": 2, "feature": "Researcher" },
-  "sailor": { "name": "Sailor", "skill_proficiencies": ["Athletics", "Perception"], "tool_proficiencies": ["Navigator's tools", "Vehicles (water)"], "languages": 0, "feature": "Ship's Passage" },
-  "soldier": { "name": "Soldier", "skill_proficiencies": ["Athletics", "Intimidation"], "tool_proficiencies": ["Gaming set", "Vehicles (land)"], "languages": 0, "feature": "Military Rank" },
-  "urchin": { "name": "Urchin", "skill_proficiencies": ["Sleight of Hand", "Stealth"], "tool_proficiencies": ["Disguise kit", "Thieves' tools"], "languages": 0, "feature": "City Secrets" }
+  "acolyte": {
+    "name": "Acolyte",
+    "skill_proficiencies": [
+      "Insight",
+      "Religion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Shelter of the Faithful"
+  },
+  "anthropologist": {
+    "name": "Anthropologist",
+    "skill_proficiencies": [
+      "Insight",
+      "Religion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Cultural Chameleon"
+  },
+  "archaeologist": {
+    "name": "Archaeologist",
+    "skill_proficiencies": [
+      "History",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Cartographer's tools or navigator's tools"
+    ],
+    "languages": 1,
+    "feature": "Dust Digger"
+  },
+  "athlete": {
+    "name": "Athlete",
+    "skill_proficiencies": [
+      "Acrobatics",
+      "Athletics"
+    ],
+    "tool_proficiencies": [
+      "Vehicles (Land)"
+    ],
+    "languages": 1,
+    "feature": "Favored Event"
+  },
+  "charlatan": {
+    "name": "Charlatan",
+    "skill_proficiencies": [
+      "Deception",
+      "Sleight of Hand"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit",
+      "forgery kit"
+    ],
+    "languages": 0,
+    "feature": "Favorite Schemes"
+  },
+  "city-watch": {
+    "name": "City Watch",
+    "skill_proficiencies": [
+      "Athletics",
+      "Insight"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Investigator"
+  },
+  "clan-crafter": {
+    "name": "Clan Crafter",
+    "skill_proficiencies": [
+      "History",
+      "Insight"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Respect of the Stout Folk"
+  },
+  "cloistered-scholar": {
+    "name": "Cloistered Scholar",
+    "skill_proficiencies": [
+      "History",
+      "plus your choice of one from among Arcana",
+      "Nature",
+      "Religion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Library Access"
+  },
+  "courtier": {
+    "name": "Courtier",
+    "skill_proficiencies": [
+      "Insight",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Court Functionary"
+  },
+  "criminal": {
+    "name": "Criminal",
+    "skill_proficiencies": [
+      "Deception",
+      "Stealth"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "thieves' tools"
+    ],
+    "languages": 0,
+    "feature": "Spy"
+  },
+  "entertainer": {
+    "name": "Entertainer",
+    "skill_proficiencies": [
+      "Acrobatics",
+      "Performance"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit",
+      "one type of musical instrument"
+    ],
+    "languages": 0,
+    "feature": "Gladiator"
+  },
+  "faceless": {
+    "name": "Faceless",
+    "skill_proficiencies": [
+      "Deception",
+      "Intimidation"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit"
+    ],
+    "languages": 1,
+    "feature": "Faceless Persona"
+  },
+  "faction-agent": {
+    "name": "Faction Agent",
+    "skill_proficiencies": [
+      "Insight and one Intelligence",
+      "Wisdom",
+      "or Charisma skill of your choice",
+      "as appropriate to your faction"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Factions of the Sword Coast"
+  },
+  "far-traveler": {
+    "name": "Far Traveler",
+    "skill_proficiencies": [
+      "Insight",
+      "Perception"
+    ],
+    "tool_proficiencies": [
+      "Any one musical instrument or gaming set of your choice",
+      "likely something native to your homeland"
+    ],
+    "languages": 1,
+    "feature": "Why Are You Here?"
+  },
+  "feylost": {
+    "name": "Feylost",
+    "skill_proficiencies": [
+      "Deception",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "One type of musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Fey Mark"
+  },
+  "fisher": {
+    "name": "Fisher",
+    "skill_proficiencies": [
+      "History",
+      "Survival"
+    ],
+    "tool_proficiencies": [],
+    "languages": 1,
+    "feature": "Harvest the Water"
+  },
+  "folk-hero": {
+    "name": "Folk Hero",
+    "skill_proficiencies": [
+      "Animal Handling",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools",
+      "vehicles (land)"
+    ],
+    "languages": 0,
+    "feature": "Defining Event"
+  },
+  "giant-foundling": {
+    "name": "Giant Foundling",
+    "skill_proficiencies": [
+      "Intimidation",
+      "Survival"
+    ],
+    "tool_proficiencies": [],
+    "languages": 1,
+    "feature": "Strike of the Giants"
+  },
+  "guild-artisan": {
+    "name": "Guild Artisan",
+    "skill_proficiencies": [
+      "Insight",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Guild Merchant"
+  },
+  "hermit": {
+    "name": "Hermit",
+    "skill_proficiencies": [
+      "Medicine",
+      "Religion"
+    ],
+    "tool_proficiencies": [
+      "Herbalism kit"
+    ],
+    "languages": 1,
+    "feature": "Life of Seclusion"
+  },
+  "house-agent": {
+    "name": "House Agent",
+    "skill_proficiencies": [
+      "Investigation",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "Two proficiencies from the House Tool Proficiencies table"
+    ],
+    "languages": 0,
+    "feature": "Role"
+  },
+  "inheritor": {
+    "name": "Inheritor",
+    "skill_proficiencies": [
+      "Survival",
+      "plus one from among Arcana",
+      "History",
+      "Religion"
+    ],
+    "tool_proficiencies": [
+      "Your choice of a gaming set or a musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Inheritance"
+  },
+  "knight-of-the-order": {
+    "name": "Knight of the Order",
+    "skill_proficiencies": [
+      "Persuasion",
+      "plus one from among Arcana",
+      "History",
+      "Nature",
+      "Religion",
+      "as appropriate for your order"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set or musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Knightly Orders of Faerûn"
+  },
+  "marine": {
+    "name": "Marine",
+    "skill_proficiencies": [
+      "Athletics",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Vehicles (land & water)"
+    ],
+    "languages": 0,
+    "feature": "Hardship Endured"
+  },
+  "mercenary-veteran": {
+    "name": "Mercenary Veteran",
+    "skill_proficiencies": [
+      "Athletics",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "vehicles (land)"
+    ],
+    "languages": 0,
+    "feature": "Mercenaries of the North"
+  },
+  "noble": {
+    "name": "Noble",
+    "skill_proficiencies": [
+      "History",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set"
+    ],
+    "languages": 1,
+    "feature": "Noble: Knight"
+  },
+  "outlander": {
+    "name": "Outlander",
+    "skill_proficiencies": [
+      "Athletics",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "One type of musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Origin"
+  },
+  "rewarded": {
+    "name": "Rewarded",
+    "skill_proficiencies": [
+      "Insight",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 0,
+    "feature": "Fortune’s Favor"
+  },
+  "ruined": {
+    "name": "Ruined",
+    "skill_proficiencies": [
+      "Stealth",
+      "Survival"
+    ],
+    "tool_proficiencies": [],
+    "languages": 0,
+    "feature": "Still Standing"
+  },
+  "rune-carver": {
+    "name": "Rune Carver",
+    "skill_proficiencies": [
+      "History",
+      "Perception"
+    ],
+    "tool_proficiencies": [
+      "One set of artisan's tools"
+    ],
+    "languages": 0,
+    "feature": "Rune Shaper"
+  },
+  "sage": {
+    "name": "Sage",
+    "skill_proficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Specialty"
+  },
+  "sailor": {
+    "name": "Sailor",
+    "skill_proficiencies": [
+      "Athletics",
+      "Perception"
+    ],
+    "tool_proficiencies": [
+      "Navigator's tools",
+      "vehicles (water)"
+    ],
+    "languages": 0,
+    "feature": "Pirate"
+  },
+  "shipwright": {
+    "name": "Shipwright",
+    "skill_proficiencies": [
+      "History",
+      "Perception"
+    ],
+    "tool_proficiencies": [
+      "Carpenter's tools",
+      "Vehicles (water)"
+    ],
+    "languages": 0,
+    "feature": "Feature: I'll patch it!"
+  },
+  "smuggler": {
+    "name": "Smuggler",
+    "skill_proficiencies": [
+      "Athletics",
+      "Deception"
+    ],
+    "tool_proficiencies": [
+      "Vehicles (water)"
+    ],
+    "languages": 0,
+    "feature": "Feature: Down Low"
+  },
+  "soldier": {
+    "name": "Soldier",
+    "skill_proficiencies": [
+      "Athletics",
+      "Intimidation"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "vehicles (land)"
+    ],
+    "languages": 0,
+    "feature": "Specialty"
+  },
+  "urchin": {
+    "name": "Urchin",
+    "skill_proficiencies": [
+      "Sleight of Hand",
+      "Stealth"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit",
+      "thieves' tools"
+    ],
+    "languages": 0,
+    "feature": "City Secrets"
+  },
+  "uthgardt-tribe-member": {
+    "name": "Uthgardt Tribe Member",
+    "skill_proficiencies": [
+      "Athletics",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "One type of musical instrument or artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Barbarian Tribes of Faerûn"
+  },
+  "waterdhavian-noble": {
+    "name": "Waterdhavian Noble",
+    "skill_proficiencies": [
+      "History",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set or one musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Kept in Style"
+  },
+  "witchlight-hand": {
+    "name": "Witchlight Hand",
+    "skill_proficiencies": [
+      "Performance",
+      "Sleight of Hand"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit or one type of musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Carnival Companion"
+  },
+  "black-fist-double-agent": {
+    "name": "Black Fist Double Agent",
+    "skill_proficiencies": [
+      "Deception",
+      "Insight"
+    ],
+    "tool_proficiencies": [
+      "Disguise Kit",
+      "and one type of artisan’s tools or gaming set"
+    ],
+    "languages": 0,
+    "feature": "Feature: Double Agent"
+  },
+  "dragon-casualty": {
+    "name": "Dragon Casualty",
+    "skill_proficiencies": [
+      "Intimidation",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Special (see origin below)"
+    ],
+    "languages": 0,
+    "feature": "Origin"
+  },
+  "iron-route-bandit": {
+    "name": "Iron Route Bandit",
+    "skill_proficiencies": [
+      "Stealth",
+      "Animal Handling"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "vehicles (land)"
+    ],
+    "languages": 0,
+    "feature": "Feature: Black-Market Breeder"
+  },
+  "phlan-insurgent": {
+    "name": "Phlan Insurgent",
+    "skill_proficiencies": [
+      "Stealth",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools",
+      "vehicles (land)"
+    ],
+    "languages": 0,
+    "feature": "Origin"
+  },
+  "stojanow-prisoner": {
+    "name": "Stojanow Prisoner",
+    "skill_proficiencies": [
+      "Deception",
+      "Perception"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "thieves' tools"
+    ],
+    "languages": 0,
+    "feature": "Feature: Ex-Convict"
+  },
+  "ticklebelly-nomad": {
+    "name": "Ticklebelly Nomad",
+    "skill_proficiencies": [
+      "Nature",
+      "Animal Handling"
+    ],
+    "tool_proficiencies": [
+      "Herbalism kit"
+    ],
+    "languages": 0,
+    "feature": "Feature: At Home in the Wild"
+  },
+  "caravan-specialist": {
+    "name": "Caravan Specialist",
+    "skill_proficiencies": [
+      "Animal Handling",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Land Vehicles"
+    ],
+    "languages": 1,
+    "feature": "Feature: Wagonmaster"
+  },
+  "earthspur-miner": {
+    "name": "Earthspur Miner",
+    "skill_proficiencies": [
+      "Athletics",
+      "Survival"
+    ],
+    "tool_proficiencies": [],
+    "languages": 0,
+    "feature": "Feature: Deep Miner"
+  },
+  "harborfolk": {
+    "name": "Harborfolk",
+    "skill_proficiencies": [
+      "Athletics",
+      "Sleight of Hand"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "vehicles (water)"
+    ],
+    "languages": 0,
+    "feature": "Feature: Harborfolk"
+  },
+  "mulmaster-aristocrat": {
+    "name": "Mulmaster Aristocrat",
+    "skill_proficiencies": [
+      "Deception",
+      "Performance"
+    ],
+    "tool_proficiencies": [
+      "One type of artistic artisan's tools and one musical instrument"
+    ],
+    "languages": 0,
+    "feature": "Feature: Highborn"
+  },
+  "phlan-refugee": {
+    "name": "Phlan Refugee",
+    "skill_proficiencies": [
+      "Insight",
+      "Athletics"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Feature: Phlan Survivor"
+  },
+  "cormanthor-refugee": {
+    "name": "Cormanthor Refugee",
+    "skill_proficiencies": [
+      "Nature",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 0,
+    "feature": "Feature: Shelter of the Elven Clergy"
+  },
+  "gate-urchin": {
+    "name": "Gate Urchin",
+    "skill_proficiencies": [
+      "Deception",
+      "Sleight of Hand"
+    ],
+    "tool_proficiencies": [
+      "Thieves' tools",
+      "one type of musical instrument"
+    ],
+    "languages": 0,
+    "feature": "Feature: Red Plume and Mage Guild Contacts"
+  },
+  "hillsfar-merchant": {
+    "name": "Hillsfar Merchant",
+    "skill_proficiencies": [
+      "Insight",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "Vehicles (land) and vehicles (water)"
+    ],
+    "languages": 0,
+    "feature": "Feature: Factor"
+  },
+  "hillsfar-smuggler": {
+    "name": "Hillsfar Smuggler",
+    "skill_proficiencies": [
+      "Perception",
+      "Stealth"
+    ],
+    "tool_proficiencies": [
+      "Forgery kit"
+    ],
+    "languages": 0,
+    "feature": "Feature: Secret Passage"
+  },
+  "secret-identity": {
+    "name": "Secret Identity",
+    "skill_proficiencies": [
+      "Deception",
+      "Stealth"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit",
+      "forgery kit"
+    ],
+    "languages": 0,
+    "feature": "Feature: Secret Identity"
+  },
+  "shade-fanatic": {
+    "name": "Shade Fanatic",
+    "skill_proficiencies": [
+      "Deception",
+      "Intimidation"
+    ],
+    "tool_proficiencies": [
+      "Forgery kit"
+    ],
+    "languages": 0,
+    "feature": "Feature: Secret Society"
+  },
+  "trade-sheriff": {
+    "name": "Trade Sheriff",
+    "skill_proficiencies": [
+      "Investigation",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "Thieves' tools"
+    ],
+    "languages": 0,
+    "feature": "Feature: Investigative Services"
+  },
+  "celebrity-adventurers-scion": {
+    "name": "Celebrity Adventurer's Scion",
+    "skill_proficiencies": [
+      "Perception",
+      "Performance"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit"
+    ],
+    "languages": 2,
+    "feature": "Feature: Name Dropping"
+  },
+  "failed-merchant": {
+    "name": "Failed Merchant",
+    "skill_proficiencies": [
+      "Investigation",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Feature: Supply Chain"
+  },
+  "gambler": {
+    "name": "Gambler",
+    "skill_proficiencies": [
+      "Deception",
+      "Insight"
+    ],
+    "tool_proficiencies": [
+      "One gaming set"
+    ],
+    "languages": 1,
+    "feature": "Feature: Never Tell Me the Odds"
+  },
+  "plaintiff": {
+    "name": "Plaintiff",
+    "skill_proficiencies": [
+      "Medicine",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Feature: Legalese"
+  },
+  "rival-intern": {
+    "name": "Rival Intern",
+    "skill_proficiencies": [
+      "History",
+      "Investigation"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Feature: Inside Informant"
+  },
+  "initiate": {
+    "name": "Initiate",
+    "skill_proficiencies": [
+      "Athletics",
+      "Intimidation"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set",
+      "vehicles (land)"
+    ],
+    "languages": 0,
+    "feature": "Trial of the Five Gods"
+  },
+  "vizier": {
+    "name": "Vizier",
+    "skill_proficiencies": [
+      "History",
+      "Religion"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools",
+      "one type of musical instrument"
+    ],
+    "languages": 0,
+    "feature": "Voice of Authority"
+  },
+  "knight-of-solamnia": {
+    "name": "Knight of Solamnia",
+    "skill_proficiencies": [
+      "Athletics",
+      "Survival"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Squire of Solamnia"
+  },
+  "mage-of-high-sorcery": {
+    "name": "Mage of High Sorcery",
+    "skill_proficiencies": [
+      "Arcana",
+      "History"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Initiate of High Sorcery"
+  },
+  "inquisitor": {
+    "name": "Inquisitor",
+    "skill_proficiencies": [
+      "Investigation",
+      "Religion"
+    ],
+    "tool_proficiencies": [
+      "Thieves' tools",
+      "one set of artisan's tools of your choice"
+    ],
+    "languages": 0,
+    "feature": "Legal Authority"
+  },
+  "gate-warden": {
+    "name": "Gate Warden",
+    "skill_proficiencies": [
+      "Persuasion",
+      "Survival"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Planar Infusion"
+  },
+  "planar-philosopher": {
+    "name": "Planar Philosopher",
+    "skill_proficiencies": [
+      "Arcana",
+      "the skill associated with your faction (see the Sigil Faction Affinities table) or one skill of your choice"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Conviction"
+  },
+  "azorius-functionary": {
+    "name": "Azorius Functionary",
+    "skill_proficiencies": [
+      "Insight",
+      "Intimidation"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Legal Authority"
+  },
+  "boros-legionnaire": {
+    "name": "Boros Legionnaire",
+    "skill_proficiencies": [
+      "Athletics",
+      "Intimidation"
+    ],
+    "tool_proficiencies": [
+      "One type of gaming set"
+    ],
+    "languages": 1,
+    "feature": "Legion Station"
+  },
+  "dimir-operative": {
+    "name": "Dimir Operative",
+    "skill_proficiencies": [
+      "Deception",
+      "Stealth"
+    ],
+    "tool_proficiencies": [
+      "Disguise kit"
+    ],
+    "languages": 1,
+    "feature": "False Identity"
+  },
+  "golgari-agent": {
+    "name": "Golgari Agent",
+    "skill_proficiencies": [
+      "Nature",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Poisoner's Kit"
+    ],
+    "languages": 1,
+    "feature": "Undercity Paths"
+  },
+  "gruul-anarch": {
+    "name": "Gruul Anarch",
+    "skill_proficiencies": [
+      "Animal Handling",
+      "Athletics"
+    ],
+    "tool_proficiencies": [
+      "Herbalism Kit"
+    ],
+    "languages": 1,
+    "feature": "Rubblebelt Refuge"
+  },
+  "izzet-engineer": {
+    "name": "Izzet Engineer",
+    "skill_proficiencies": [
+      "Arcana",
+      "Investigation"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Urban Infrastructure"
+  },
+  "orzhov-representative": {
+    "name": "Orzhov Representative",
+    "skill_proficiencies": [
+      "Intimidation",
+      "Religion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Leverage"
+  },
+  "rakdos-cultist": {
+    "name": "Rakdos Cultist",
+    "skill_proficiencies": [
+      "Acrobatics",
+      "Performance"
+    ],
+    "tool_proficiencies": [
+      "One type of musical instrument"
+    ],
+    "languages": 1,
+    "feature": "A Flair for the Dramatic"
+  },
+  "selesnya-initiate": {
+    "name": "Selesnya Initiate",
+    "skill_proficiencies": [
+      "Nature",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools or one musical instrument"
+    ],
+    "languages": 1,
+    "feature": "Conclave's Shelter"
+  },
+  "simic-scientist": {
+    "name": "Simic Scientist",
+    "skill_proficiencies": [
+      "Arcana",
+      "Medicine"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Clades and Projects"
+  },
+  "lorehold-student": {
+    "name": "Lorehold Student",
+    "skill_proficiencies": [
+      "History",
+      "Religion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Lorehold Initiate"
+  },
+  "prismari-student": {
+    "name": "Prismari Student",
+    "skill_proficiencies": [
+      "Acrobatics",
+      "Performance"
+    ],
+    "tool_proficiencies": [
+      "One type of musical instrument or artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Prismari Initiate"
+  },
+  "quandrix-student": {
+    "name": "Quandrix Student",
+    "skill_proficiencies": [
+      "Arcana",
+      "Nature"
+    ],
+    "tool_proficiencies": [
+      "One type of artisan's tools"
+    ],
+    "languages": 1,
+    "feature": "Quandrix Initiate"
+  },
+  "silverquill-student": {
+    "name": "Silverquill Student",
+    "skill_proficiencies": [
+      "Intimidation",
+      "Persuasion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Silverquill Initiate"
+  },
+  "witherbloom-student": {
+    "name": "Witherbloom Student",
+    "skill_proficiencies": [
+      "Nature",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Herbalism Kit"
+    ],
+    "languages": 1,
+    "feature": "Witherbloom Initiate"
+  },
+  "grinner": {
+    "name": "Grinner",
+    "skill_proficiencies": [
+      "Deception",
+      "Performance"
+    ],
+    "tool_proficiencies": [
+      "One type of musical instrument",
+      "thieves' tools"
+    ],
+    "languages": 0,
+    "feature": "Code-Songs"
+  },
+  "volstrucker-agent": {
+    "name": "Volstrucker Agent",
+    "skill_proficiencies": [
+      "Deception",
+      "Stealth"
+    ],
+    "tool_proficiencies": [
+      "Poisoner's Kit"
+    ],
+    "languages": 1,
+    "feature": "Tragedy"
+  },
+  "astral-drifter": {
+    "name": "Astral Drifter",
+    "skill_proficiencies": [
+      "Insight",
+      "Religion"
+    ],
+    "tool_proficiencies": [],
+    "languages": 2,
+    "feature": "Longevity"
+  },
+  "wildspacer": {
+    "name": "Wildspacer",
+    "skill_proficiencies": [
+      "Athletics",
+      "Survival"
+    ],
+    "tool_proficiencies": [
+      "Navigator's tools",
+      "vehicles (space)"
+    ],
+    "languages": 0,
+    "feature": "Close Encounter"
+  }
 }
