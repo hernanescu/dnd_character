@@ -11,7 +11,7 @@
 <body>
   <div id="app"></div>
   <script type="module">
-    import { renderList, initBuilder, renderSpellLibrary } from '/static/js/builder.js';
+    import { renderList, initBuilder, renderSpellLibrary, renderItemLibrary } from '/static/js/builder.js';
     import { initSheet } from '/static/js/sheet.js';
 
     async function boot() {
@@ -24,6 +24,8 @@
         initBuilder();
       } else if (view === 'spells') {
         renderSpellLibrary();
+      } else if (view === 'items') {
+        renderItemLibrary();
       } else {
         renderList();
       }

@@ -184,6 +184,25 @@ def get_spells():
     return jsonify(spells)
 
 
+@app.route('/api/items')
+def get_items():
+    source = request.args.get('source', '').strip().lower()
+    rarity = request.args.get('rarity', '').strip().lower()
+    q = request.args.get('q', '').strip().lower()
+    path = os.path.join(_data_dir(), 'items.json')
+    if not os.path.isfile(path):
+        return jsonify({}), 200
+    with open(path) as f:
+        items = json.load(f)
+    if source:
+        items = {k: v for k, v in items.items() if v.get('source', '').lower() == source}
+    if rarity:
+        items = {k: v for k, v in items.items() if v.get('rarity', '').lower() == rarity}
+    if q:
+        items = {k: v for k, v in items.items() if q in v.get('name', '').lower() or q in (v.get('note', '') or '').lower()}
+    return jsonify(items)
+
+
 @app.route('/api/backgrounds')
 def get_backgrounds():
     path = os.path.join(_data_dir(), 'backgrounds.json')

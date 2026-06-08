@@ -10,6 +10,14 @@ export const api = {
   getClass: (key) => apiFetch(`/api/classes/${key}`),
   getBackgrounds: () => apiFetch('/api/backgrounds'),
   getSpells: (classKey) => apiFetch(`/api/spells?class=${classKey}`),
+  getItems: (params) => {
+    const p = new URLSearchParams();
+    if (params?.source) p.set('source', params.source);
+    if (params?.rarity) p.set('rarity', params.rarity);
+    if (params?.q) p.set('q', params.q);
+    const qs = p.toString();
+    return apiFetch(`/api/items${qs ? '?' + qs : ''}`);
+  },
   getCharacters: () => apiFetch('/api/characters'),
   getCharacter: (id) => apiFetch(`/api/characters/${id}`),
   createCharacter: (data) => apiFetch('/api/characters', { method: 'POST', body: data }),

@@ -234,6 +234,109 @@ export async function renderSpellLibrary() {
   window.filterLibrary();
 }
 
+export async function renderItemLibrary() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="app-header">
+      <div>
+        <button class="back-btn" style="padding:0 0 6px;color:#888" onclick="window.location='/'">‹ Characters</button>
+        <div class="char-name" style="font-size:18px">Item Library</div>
+      </div>
+      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+    </div>
+    <div style="padding:10px 12px 0">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        <select id="il-source" class="input-field input-sm" style="flex:1;min-width:90px" onchange="filterItems()">
+          <option value="">All sources</option>
+          <option value="dmg 2024">DMG 2024</option>
+          <option value="dmg 2014">DMG 2014</option>
+          <option value="xgte">XGTE</option>
+          <option value="tcoe">TCoE</option>
+        </select>
+        <select id="il-rarity" class="input-field input-sm" style="width:90px" onchange="filterItems()">
+          <option value="">All rarities</option>
+          <option value="common">Common</option>
+          <option value="uncommon">Uncommon</option>
+          <option value="rare">Rare</option>
+          <option value="very rare">Very Rare</option>
+          <option value="legendary">Legendary</option>
+          <option value="artifact">Artifact</option>
+        </select>
+        <input id="il-min-gp" class="input-field input-sm" type="number" min="0" placeholder="Min gp" style="width:70px" oninput="filterItems()">
+        <input id="il-max-gp" class="input-field input-sm" type="number" min="0" placeholder="Max gp" style="width:75px" oninput="filterItems()">
+        <input id="il-search" class="input-field input-sm" style="flex:2;min-width:100px" placeholder="Search items…" oninput="filterItems()">
+      </div>
+      <div id="il-count" style="font-size:11px;color:#888;margin-bottom:6px"></div>
+    </div>
+    <div id="il-body" style="padding:0 12px 24px"></div>
+  `;
+
+  let allItems = {};
+  try {
+    const res = await fetch('/api/items');
+    allItems = await res.json();
+  } catch (e) {
+    document.getElementById('il-body').innerHTML = `<div style="padding:24px;color:#888">Error loading items</div>`;
+    return;
+  }
+  app._items = allItems;
+
+  window.filterItems = () => {
+    const src = document.getElementById('il-source')?.value || '';
+    const rar = document.getElementById('il-rarity')?.value || '';
+    const minGp = parseFloat(document.getElementById('il-min-gp')?.value) || 0;
+    const maxGp = parseFloat(document.getElementById('il-max-gp')?.value) || 0;
+    const q = (document.getElementById('il-search')?.value || '').toLowerCase();
+    const items = Object.entries(allItems).filter(([, it]) => {
+      if (src && (it.source || '').toLowerCase() !== src) return false;
+      if (rar && (it.rarity || '').toLowerCase() !== rar) return false;
+      if (minGp > 0 && (it.cost_gp == null || it.cost_gp < minGp)) return false;
+      if (maxGp > 0 && (it.cost_gp == null || it.cost_gp > maxGp)) return false;
+      if (q && !it.name.toLowerCase().includes(q) && !(it.note || '').toLowerCase().includes(q)) return false;
+      return true;
+    }).sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+    document.getElementById('il-count').textContent = `${items.length} items`;
+    document.getElementById('il-body').innerHTML = items.map(([, it]) => {
+      const rarityColors = { common: '#888', uncommon: '#2d7d46', rare: '#2a5a9e', 'very rare': '#8b3a9e', legendary: '#c97d2e', artifact: '#c93232' };
+      const color = rarityColors[(it.rarity || '').toLowerCase()] || '#888';
+      const attune = it.attunement === 'Yes' ? ' <span style="font-size:9px;background:#555;color:#fff;padding:1px 4px;border-radius:3px">A</span>' : '';
+      const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
+      const props = [];
+      if (it.armor_cost) props.push(`Armor: ${it.armor_cost} gp`);
+      if (it.ac_bonus) props.push(`AC +${it.ac_bonus}`);
+      if (it.weapon_bonus) props.push(`Atk/Dmg +${it.weapon_bonus}`);
+      if (it.save_bonus) props.push(`Save +${it.save_bonus}`);
+      if (it.rare_material) props.push(it.rare_material);
+      if (it.set_score != null) props.push(`Set ${it.set_score}`);
+      if (it.spell_level != null) props.push(`Spell Lv ${it.spell_level}`);
+      if (it.unlimited_charges === 'Y') props.push('∞ Charges');
+      else if (it.charges_per_day) props.push(`${it.charges_per_day}/day`);
+      const propsHtml = props.length ? `<div style="margin-top:3px;font-size:10px;color:#888">${props.join(' · ')}</div>` : '';
+      const extraProps = [];
+      if (it.condition) extraProps.push(`Condition: ${it.condition}`);
+      if (it.consumable_damage) extraProps.push(`Dmg: ${it.consumable_damage} avg`);
+      if (it.perm_damage) extraProps.push(`Perm Dmg: ${it.perm_damage} avg`);
+      if (it.semi_perm_damage) extraProps.push(`Semi-perm Dmg: ${it.semi_perm_damage} avg`);
+      if (it.restore_hp) extraProps.push(`Heal: ${it.restore_hp} avg`);
+      if (it.duration_minutes != null) extraProps.push(`Duration: ${it.duration_minutes} min`);
+      const extraHtml = extraProps.length ? `<div style="margin-top:2px;font-size:10px;color:#888">${extraProps.join(' · ')}</div>` : '';
+      return `<div class="spell-card" onclick="this.classList.toggle('expanded')" style="margin-bottom:6px">
+        <div class="spell-header">
+          <span style="background:${color};color:#fff;padding:1px 6px;border-radius:4px;font-size:9px;white-space:nowrap">${escHtml(it.rarity || '')}</span>
+          <span class="spell-name">${escHtml(it.name)}${attune}</span>
+          <span class="spell-school">${cost}</span>
+        </div>
+        <div style="margin-top:2px;font-size:10px;color:#888">${escHtml(it.source || '')}</div>
+        ${propsHtml}
+        ${extraHtml}
+        ${it.note ? `<div style="margin-top:4px;font-size:10px;color:#888;border-top:1px solid var(--gray-light);padding-top:3px"><span style="color:#aaa">Pricing:</span> ${escHtml(it.note)}</div>` : ''}
+      </div>`;
+    }).join('');
+  };
+  window.filterItems();
+}
+
 export async function renderList() {
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -241,7 +344,8 @@ export async function renderList() {
       <div class="char-list-title">D&amp;D Character</div>
       <div class="char-list-sub">Character Sheet</div>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=spells'" style="flex:1">📖 Spell Library</button>
+        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=spells'" style="flex:1">📖 Spells</button>
+        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=items'" style="flex:1">🎒 Items</button>
         <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
       </div>
     </div>
@@ -520,14 +624,7 @@ function renderStep3(body) {
     </div>
     <div class="field-label">Background <span style="font-weight:400;color:#888">(${filteredKeys.length})</span></div>
     <div class="pills">${filteredKeys.map(k => `<div class="pill${state.background===k?' selected':''}" onclick="selectBackground('${k}')">${escHtml(state.backgroundsData[k].name)}</div>`).join('')}</div>
-    ${selectedBg ? `
-    <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
-      <div style="font-weight:700;margin-bottom:4px">${escHtml(selectedBg.name)} <span style="font-weight:400;color:#888;font-size:10px">· ${bgSourceFor(state.background)}</span></div>
-      ${bgSkills.length ? `<div style="margin-bottom:3px"><span style="color:#888">Skills:</span> <b>${escHtml(bgSkills.join(', '))}</b></div>` : ''}
-      ${bgTools.length ? `<div style="margin-bottom:3px"><span style="color:#888">Tools:</span> ${escHtml(bgTools.join(', '))}</div>` : ''}
-      ${bgLangs ? `<div style="margin-bottom:3px"><span style="color:#888">Languages:</span> +${bgLangs} of choice</div>` : ''}
-      ${bgFeature ? `<div style="margin-top:4px;font-size:11px;color:#888">Feature: <i>${escHtml(bgFeature)}</i></div>` : ''}
-    </div>` : ''}
+    ${selectedBg ? renderBgDetailCard(selectedBg, state.background) : ''}
     ${bonusSkills ? `
     <div class="field-label" style="margin-top:12px">${escHtml(raceData.name)} bonus skills (choose ${bonusSkills.count})</div>
     <div class="pills">${racialSkillPills}</div>
@@ -535,6 +632,56 @@ function renderStep3(body) {
     <div class="field-label" style="margin-top:12px">${clsName} skills (choose ${max})</div>
     <div class="pills">${classSkillPills}</div>
   `;
+}
+
+function renderBgDetailCard(bg, key) {
+  const skills = bg.skill_proficiencies || [];
+  const tools = bg.tool_proficiencies || [];
+  const langs = bg.languages || 0;
+  const features = bg.features || [];
+  const sc = bg.suggested_characteristics || {};
+
+  const featureHtml = features.map(f => {
+    let html = `<div style="margin-top:6px"><b>${escHtml(f.name)}</b>`;
+    if (f.description) {
+      html += `<div style="font-size:11px;color:var(--text);margin-top:2px">${escHtml(f.description)}</div>`;
+    }
+    if (f.table && f.table.entries?.length) {
+      html += `<div style="margin-top:4px;font-size:10px">`;
+      for (const [die, entry] of f.table.entries) {
+        html += `<div style="padding:1px 0"><span style="color:#888">${escHtml(die)}</span> ${escHtml(entry)}</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }).join('');
+
+  const scHtml = Object.entries(sc).map(([section, cfg]) => {
+    const label = section.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    let html = `<div style="margin-top:8px"><b>${escHtml(label)}</b> <span style="color:#888;font-size:10px">(d${cfg.die?.replace('d','')||'6'})</span>`;
+    if (cfg.entries?.length) {
+      html += `<div style="margin-top:2px;font-size:10px;max-height:90px;overflow-y:auto">`;
+      for (const [die, text] of cfg.entries) {
+        html += `<div style="padding:1px 0"><span style="color:#888">${escHtml(die)}</span> ${escHtml(text)}</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }).join('');
+
+  return `
+    <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
+      <div style="font-weight:700;margin-bottom:4px">${escHtml(bg.name)} <span class="source-badge">${escHtml(bgSourceFor(key))}</span></div>
+      ${bg.description ? `<div style="font-size:11px;color:var(--text);margin-bottom:6px">${escHtml(bg.description)}</div>` : ''}
+      ${skills.length ? `<div style="margin-bottom:2px"><span style="color:#888">Skills:</span> <b>${escHtml(skills.join(', '))}</b></div>` : ''}
+      ${tools.length ? `<div style="margin-bottom:2px"><span style="color:#888">Tools:</span> ${escHtml(tools.join(', '))}</div>` : ''}
+      ${langs ? `<div style="margin-bottom:2px"><span style="color:#888">Languages:</span> +${langs} of choice</div>` : ''}
+      ${bg.equipment ? `<div style="margin-bottom:2px"><span style="color:#888">Equipment:</span> ${escHtml(bg.equipment)}</div>` : ''}
+      ${featureHtml}
+      ${scHtml}
+    </div>`;
 }
 
 function renderChoicePickers(allChoices) {

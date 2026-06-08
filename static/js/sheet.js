@@ -36,6 +36,34 @@ const ARMORS = [
   { key: 'plate',       name: 'Plate',           type: 'heavy',  base: 18, dex: false, maxDex: 0 },
 ];
 
+function getEquippedBonuses() {
+  const inv = char.inventory || [];
+  const out = { ac: 0, saves: 0 };
+  for (const item of inv) {
+    if (!item.equipped) continue;
+    const lib = item.slug ? (itemData || {})[item.slug] : findItemByName(item.name);
+    if (!lib) continue;
+    if (lib.attunement === 'Yes' && !item.attuned) continue;
+    out.ac += lib.ac_bonus || 0;
+    out.saves += lib.save_bonus || 0;
+  }
+  return out;
+}
+
+function activeAttunementCount() {
+  return (char.inventory || []).filter(i => {
+    const lib = i.slug ? (itemData || {})[i.slug] : findItemByName(i.name);
+    return lib && lib.attunement === 'Yes' && i.attuned;
+  }).length;
+}
+
+function attunementSlotCount() {
+  return (char.inventory || []).filter(i => {
+    const lib = i.slug ? (itemData || {})[i.slug] : findItemByName(i.name);
+    return lib && lib.attunement === 'Yes';
+  }).length;
+}
+
 function computeAC() {
   const equipped = char.armor || { key: 'none', shield: false };
   const armorDef = ARMORS.find(a => a.key === equipped.key) || ARMORS[0];
@@ -45,6 +73,7 @@ function computeAC() {
     ac += armorDef.maxDex !== null ? Math.min(dexMod, armorDef.maxDex) : dexMod;
   }
   if (equipped.shield) ac += 2;
+  ac += getEquippedBonuses().ac;
   return ac;
 }
 const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
@@ -57,8 +86,11 @@ function getTabs() {
 let char = null;
 let classData = null;
 let spellData = null;
+let bgData = null;
+let itemData = null;
 let activeTab = 0;
 let editMode = false;
+let _expandedItems = {};
 
 function abilityMod(score) { return Math.floor((score - 10) / 2); }
 function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }
@@ -105,9 +137,10 @@ export async function initSheet(id) {
   app.innerHTML = `<div style="padding:24px;text-align:center;color:#888">Loading...</div>`;
   try {
     const charData = await api.getCharacter(id);
-    [char, classData, spellData] = await Promise.all([
-      charData, api.getClass(charData.class_key), api.getSpells(charData.class_key),
+    [char, classData, spellData, bgData, itemData] = await Promise.all([
+      charData, api.getClass(charData.class_key), api.getSpells(charData.class_key), api.getBackgrounds(), api.getItems(),
     ]);
+    char.background_name = (bgData[char.background] || {}).name || char.background;
   } catch (e) {
     app.innerHTML = `<div style="padding:24px;color:#888">Error loading character</div>`;
     return;
@@ -125,7 +158,7 @@ function render() {
       <div>
         <button class="back-btn" style="padding:0 0 6px;color:#888" onclick="window.location='/'">‹ Characters</button>
         <div class="char-name">${escHtml(char.name)}</div>
-        <div class="char-meta">${clsName} · ${char.subclass_key ? escHtml(char.subclass_key) : 'No Subclass'} · Level ${char.level}</div>
+        <div class="char-meta">${clsName} · ${char.subclass_key ? escHtml(char.subclass_key) : 'No Subclass'} · Level ${char.level} · ${escHtml(char.background_name)}</div>
       </div>
       <div style="display:flex;align-items:center;gap:4px">
         <div class="hp-badge" onclick="openHpEditor()">
@@ -182,15 +215,16 @@ function renderStats(el) {
         </div>`; }).join('')}
     </div>
     <div class="section-title">Saving Throws</div>
-    ${['str','dex','con','int','wis','cha'].map(ab => {
+    ${(() => { const eq = getEquippedBonuses(); return ['str','dex','con','int','wis','cha'].map(ab => {
       const isProf = classData?.saving_throws?.includes(ab);
-      const bonus = abilityMod(scores[ab]) + (isProf ? pb : 0);
+      const bonus = abilityMod(scores[ab]) + (isProf ? pb : 0) + eq.saves;
+      const eqStr = eq.saves ? ` <span style="font-size:9px;color:#888">+${eq.saves} eq</span>` : '';
       return `<div class="save-row">
         <div class="save-dot${isProf ? ' prof' : ''}"></div>
         <div class="save-name">${ABILITY_FULL[ab]}</div>
-        <div class="save-bonus">${fmtBonus(bonus)}</div>
+        <div class="save-bonus">${fmtBonus(bonus)}${eqStr}</div>
       </div>`;
-    }).join('')}
+    }).join(''); })()}
     <div class="section-title">Skills</div>
     ${SKILLS.map(sk => {
       const bonus = skillBonus(sk.key, sk.ability);
@@ -204,7 +238,44 @@ function renderStats(el) {
         <div class="skill-bonus">${fmtBonus(bonus)}</div>
       </div>`;
     }).join('')}
+    ${renderBgCard()}
   `;
+}
+
+function renderBgCard() {
+  const bg = bgData?.[char.background];
+  if (!bg) return '';
+  const skills = bg.skill_proficiencies || [];
+  const tools = bg.tool_proficiencies || [];
+  const langs = bg.languages || 0;
+  const features = bg.features || [];
+
+  const featureHtml = features.map(f => {
+    let html = `<div style="margin-top:6px"><b>${escHtml(f.name)}</b>`;
+    if (f.description) {
+      html += `<div style="font-size:11px;color:var(--text);margin-top:2px">${escHtml(f.description)}</div>`;
+    }
+    if (f.table && f.table.entries?.length) {
+      html += `<div style="margin-top:4px;font-size:10px">`;
+      for (const [die, entry] of f.table.entries) {
+        html += `<div style="padding:1px 0"><span style="color:#888">${escHtml(die)}</span> ${escHtml(entry)}</div>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    return html;
+  }).join('');
+
+  return `
+    <div class="section-title" style="margin-top:16px">Background: ${escHtml(bg.name)}</div>
+    <div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
+      ${bg.description ? `<div style="font-size:11px;margin-bottom:6px">${escHtml(bg.description)}</div>` : ''}
+      ${skills.length ? `<div style="margin-bottom:2px"><span style="color:#888">Skills:</span> <b>${escHtml(skills.join(', '))}</b></div>` : ''}
+      ${tools.length ? `<div style="margin-bottom:2px"><span style="color:#888">Tools:</span> ${escHtml(tools.join(', '))}</div>` : ''}
+      ${langs ? `<div style="margin-bottom:2px"><span style="color:#888">Languages:</span> +${langs} of choice</div>` : ''}
+      ${bg.equipment ? `<div style="margin-bottom:2px"><span style="color:#888">Equipment:</span> ${escHtml(bg.equipment)}</div>` : ''}
+      ${featureHtml}
+    </div>`;
 }
 
 function renderCombat(el) {
@@ -236,12 +307,15 @@ function renderCombat(el) {
       <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
     </div>
     ${weapons.length ? weapons.map((w, i) => {
+      const wLib = w.slug ? (itemData || {})[w.slug] : findItemByName(w.name);
+      const wBonus = wLib?.weapon_bonus || 0;
       const mod = abilityMod(scores[w.ability] || 10);
-      const atk = fmtBonus(mod + (w.proficient ? pb : 0));
+      const atk = fmtBonus(mod + (w.proficient ? pb : 0) + wBonus);
       const dmg = `${w.damage_die || '1d6'}${mod >= 0 ? '+' : ''}${mod}`;
+      const bonusTag = wBonus ? ` <span style="font-size:9px;color:#888">+${wBonus} eq</span>` : '';
       return `<div class="weapon-row">
         <div>
-          <div class="weapon-name">${escHtml(w.name)}</div>
+          <div class="weapon-name">${escHtml(w.name)}${bonusTag}</div>
           <div style="font-size:10px;color:#888">${escHtml(w.type || '')}</div>
         </div>
         <div class="weapon-atk">${atk}</div>
@@ -273,14 +347,14 @@ function renderCombat(el) {
     </div>` : ''}
     <div class="section-title">Saving Throws</div>
     <div class="saves-grid">
-    ${['str','dex','con','int','wis','cha'].map(ab => {
+    ${(() => { const eq = getEquippedBonuses(); return ['str','dex','con','int','wis','cha'].map(ab => {
       const isProf = classData?.saving_throws?.includes(ab);
-      const bonus = abilityMod(scores[ab]) + (isProf ? pb : 0);
+      const bonus = abilityMod(scores[ab]) + (isProf ? pb : 0) + eq.saves;
       return `<div class="save-box">
         <div class="save-bonus">${fmtBonus(bonus)}</div>
-        <div class="save-name">${ABILITY_FULL[ab]}${isProf ? ' •' : ''}</div>
+        <div class="save-name">${ABILITY_FULL[ab]}${isProf ? ' •' : ''}${eq.saves ? '+' : ''}</div>
       </div>`;
-    }).join('')}
+    }).join(''); })()}
     </div>
   `;
 }
@@ -377,25 +451,77 @@ function spellCard(s) {
   </div>`;
 }
 
+function findItemByName(name) {
+  if (!itemData) return null;
+  const key = Object.keys(itemData).find(k => itemData[k].name.toLowerCase() === name.toLowerCase());
+  return key ? itemData[key] : null;
+}
+
+const RARITY_COLORS = { common: '#888', uncommon: '#2d7d46', rare: '#2a5a9e', 'very rare': '#8b3a9e', legendary: '#c97d2e', artifact: '#c93232' };
+
+let _itemPickerFilter = '';
+
+function _acBreakdown() {
+  const a = char.armor || { key: 'none', shield: false };
+  const d = ARMORS.find(x => x.key === a.key) || ARMORS[0];
+  const dex = abilityMod(char.ability_scores?.dex || 10);
+  const parts = [];
+  if (d.type === 'none') parts.push(`10 + DEX(${dex})`);
+  else if (d.type === 'light') parts.push(`${d.base} + DEX(${dex})`);
+  else if (d.type === 'medium') parts.push(`${d.base} + DEX(min ${dex},${d.maxDex})`);
+  else parts.push(`${d.base} (no DEX)`);
+  if (a.shield) parts.push('Shield +2');
+  const eq = getEquippedBonuses();
+  if (eq.ac) parts.push(`Items +${eq.ac}`);
+  return parts.join(' + ');
+}
+
 function renderInventory(el) {
   const coins = char.coins || { pp:0, gp:0, ep:0, sp:0, cp:0 };
   const inventory = char.inventory || [];
-  const equipped = char.armor || { key: 'none', shield: false };
-  const equippedDef = ARMORS.find(a => a.key === equipped.key) || ARMORS[0];
+  const baseArmor = char.armor || { key: 'none', shield: false };
+  const baseDef = ARMORS.find(a => a.key === baseArmor.key) || ARMORS[0];
+  const totalGP = (coins.gp || 0) + (coins.pp || 0) * 10 + (coins.ep || 0) * 0.5 + (coins.sp || 0) * 0.1 + (coins.cp || 0) * 0.01;
+  const eqBonuses = getEquippedBonuses();
+  const attCount = activeAttunementCount();
+  const attTotal = attunementSlotCount();
+
+  function libFor(item) {
+    return item.slug ? (itemData || {})[item.slug] : findItemByName(item.name);
+  }
+
+  function bonuses(lib) {
+    if (!lib) return [];
+    const b = [];
+    if (lib.ac_bonus) b.push(`AC +${lib.ac_bonus}`);
+    if (lib.weapon_bonus) b.push(`Atk +${lib.weapon_bonus}`);
+    if (lib.save_bonus) b.push(`Save +${lib.save_bonus}`);
+    if (lib.set_score != null) b.push(`Ability +${lib.set_score}`);
+    if (lib.rare_material) b.push(lib.rare_material);
+    if (lib.spell_level != null) b.push(`Spell Lv ${lib.spell_level}`);
+    if (lib.condition) b.push(lib.condition);
+    return b;
+  }
+
   el.innerHTML = `
-    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
-      <span>Armor</span>
-      <span style="font-size:11px;color:#888">AC ${computeAC()}</span>
-    </div>
-    <div style="margin-bottom:6px">
-      <div class="pills" style="flex-wrap:wrap;gap:4px">
-        ${ARMORS.map(a => `<div class="pill${equipped.key === a.key ? ' selected' : ''}" style="font-size:10px" onclick="equipArmor('${a.key}')">${escHtml(a.name)}</div>`).join('')}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--gray-bg);border-radius:6px;margin-bottom:12px">
+      <div>
+        <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Armor Class</div>
+        <div style="font-size:22px;font-weight:700">${computeAC()}</div>
       </div>
-      <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
-        <div class="pill${equipped.shield ? ' selected' : ''}" style="font-size:10px" onclick="toggleShield()">Shield +2</div>
-        <span style="font-size:10px;color:#888">${equippedDef.type === 'none' ? '10 + DEX' : equippedDef.type === 'light' ? `${equippedDef.base} + DEX` : equippedDef.type === 'medium' ? `${equippedDef.base} + DEX (max 2)` : `${equippedDef.base} (no DEX)`}${equipped.shield ? ' + 2 (shield)' : ''}</span>
+      <div style="text-align:right;font-size:9px;color:#888;line-height:1.5">
+        ${_acBreakdown().split(' + ').map(p => `<div>${p}</div>`).join('')}
       </div>
+      ${editMode ? `<div style="margin-left:8px;display:flex;flex-direction:column;gap:2px">
+        <select class="input-field input-sm" style="font-size:9px;padding:2px 4px;width:80px" onchange="equipArmor(this.value)">
+          ${ARMORS.map(a => `<option value="${a.key}" ${baseArmor.key === a.key ? 'selected' : ''}>${escHtml(a.name)}</option>`).join('')}
+        </select>
+        <label style="font-size:9px;display:flex;align-items:center;gap:2px;cursor:pointer">
+          <input type="checkbox" ${baseArmor.shield ? 'checked' : ''} onchange="toggleShield()"> Shield +2
+        </label>
+      </div>` : ''}
     </div>
+
     <div class="section-title">Coins</div>
     <div class="coin-grid">
       ${['pp','gp','ep','sp','cp'].map(c => `
@@ -403,25 +529,124 @@ function renderInventory(el) {
           <div class="coin-val" onclick="editCoin('${c}')">${coins[c] ?? 0}</div>
           <div class="coin-label">${c.toUpperCase()}</div>
         </div>`).join('')}
+      <div class="coin-box" style="background:var(--card-bg)">
+        <div class="coin-val" style="font-size:11px">${totalGP.toFixed(0)}</div>
+        <div class="coin-label">TOTAL GP</div>
+      </div>
     </div>
-    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-top:16px">
       <span>Items</span>
       <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
     </div>
-    ${inventory.map((item, i) => `
-      <div class="item-row">
-        <div class="item-name">${escHtml(item.name)}</div>
-        <div class="item-qty">x${item.qty}</div>
-        ${editMode ? `<button class="delete-btn" onclick="removeItem(${i})">×</button>` : ''}
-      </div>`).join('')}
+    ${attTotal > 0 ? `
+    <div style="margin-bottom:8px;padding:6px 8px;background:var(--gray-bg);border-radius:4px;font-size:11px;display:flex;align-items:center;gap:8px">
+      <span style="font-weight:600">Attunement:</span>
+      <span style="color:${attCount > 3 ? '#c44' : '#888'}">${attCount}/3</span>
+      <span style="color:#888;font-size:10px">(${attTotal} items require attunement)</span>
+    </div>` : ''}
+    ${inventory.length === 0 ? '<div style="padding:12px;color:#888;font-size:12px;text-align:center">No items carried.</div>' : inventory.map((item, i) => {
+      const lib = libFor(item);
+      const rColor = lib ? (RARITY_COLORS[(lib.rarity || '').toLowerCase()] || '#888') : '#888';
+      const isEq = !!item.equipped;
+      const isAt = !!item.attuned;
+      const needsAt = lib?.attunement === 'Yes';
+      const canBenefit = isEq && (!needsAt || isAt);
+      const bonusList = bonuses(lib);
+      return `<div class="spell-card" style="margin-bottom:6px">
+        <div class="spell-header" onclick="toggleItemDetail(${i})" style="cursor:pointer">
+          <span style="font-size:10px;color:#888;width:14px;flex-shrink:0" id="item-arrow-${i}">▸</span>
+          <span style="font-size:11px;flex-shrink:0;width:14px;text-align:center;cursor:pointer" onclick="event.stopPropagation();toggleEquip(${i})" title="${isEq ? 'Equipped (click to unequip)' : 'Unequipped (click to equip)'}">${isEq ? '<span style="color:#4a4">●</span>' : '<span style="color:#aaa">○</span>'}</span>
+          ${lib ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rColor};flex-shrink:0"></span>` : ''}
+          <span class="spell-name" style="font-size:12px">${escHtml(item.name)}</span>
+          <span class="spell-school" style="font-size:10px">x${item.qty}</span>
+          ${editMode ? `<button class="delete-btn" onclick="event.stopPropagation();removeItem(${i})" style="font-size:11px;flex-shrink:0">×</button>` : ''}
+        </div>
+        <div id="item-detail-${i}" class="spell-desc" style="display:none;padding-top:6px">
+          ${lib ? `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px">
+            <span style="color:${rColor};font-size:10px;font-weight:600">${escHtml(lib.rarity)}</span>
+            <span style="color:#888;font-size:9px">${escHtml(lib.source)}</span>
+            ${needsAt ? `<span style="font-size:8px;background:#555;color:#fff;padding:1px 5px;border-radius:8px">Requires Attunement</span>` : ''}
+          </div>
+          ${bonusList.length ? `<div style="font-size:11px;margin-bottom:4px;color:${canBenefit ? 'var(--text)' : '#888'}">${bonusList.join(' · ')}</div>` : ''}
+          ${!canBenefit && lib ? `<div style="font-size:10px;color:#a44;margin-bottom:3px">${!isEq ? 'Not equipped — bonuses inactive' : 'Not attuned — bonuses inactive'}</div>` : ''}
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;padding-top:4px;border-top:1px solid var(--gray-light)">
+            ${editMode ? `
+            <span class="eq-btn ${isEq ? 'on' : ''}" onclick="toggleEquip(${i})">${isEq ? '✓ Equipped' : '○ Equip'}</span>` : `
+            <span style="font-size:10px;color:${isEq ? '#4a4' : '#888'}">${isEq ? '● Equipped' : '○ Not equipped'}</span>`}
+            ${needsAt ? `<span class="eq-btn ${isAt ? 'on' : ''}" onclick="toggleAttune(${i})" style="${editMode ? '' : 'font-size:10px;cursor:pointer;color:#888'}">${isAt ? '✦ Attuned' : '○ Attune'}</span>` : ''}
+          </div>
+          ${lib.note ? `<div style="font-size:9px;color:#888;margin-top:4px;padding-top:3px;border-top:1px solid var(--gray-light)">Pricing: ${escHtml(lib.note)}</div>` : ''}
+          ` : `<div style="color:#888;font-size:10px">No library data. <span style="color:#aaa">Add from library to link stats.</span></div>`}
+        </div>
+      </div>`;
+    }).join('')}
     ${editMode ? `
     <div class="add-row">
-      <input class="input-field" id="item-name" placeholder="Item">
-      <input class="input-field input-sm" id="item-qty" placeholder="1" type="number" min="1" value="1">
+      <input class="input-field" id="item-name" placeholder="Item name" style="flex:1">
+      <input class="input-field input-sm" id="item-qty" placeholder="1" type="number" min="1" value="1" style="width:50px">
       <button class="btn btn-primary btn-sm" onclick="addItem()">+</button>
+    </div>
+    <div style="margin-top:6px">
+      <button class="btn btn-sm btn-outline" onclick="toggleItemPicker()" style="width:100%">📖 Browse Item Library</button>
+      <div id="item-picker" style="display:none;margin-top:6px;padding:8px;background:var(--gray-bg);border-radius:6px;max-height:300px;overflow-y:auto">
+        <input class="input-field input-sm" id="ip-search" placeholder="Search items..." style="width:100%;margin-bottom:6px" oninput="filterItemPicker()">
+        <div id="ip-results"></div>
+      </div>
     </div>` : ''}
   `;
+
+  Object.keys(_expandedItems).forEach(i => {
+    if (_expandedItems[i]) {
+      const el = document.getElementById(`item-detail-${i}`);
+      const arrow = document.getElementById(`item-arrow-${i}`);
+      if (el) el.style.display = 'block';
+      if (arrow) arrow.textContent = '▾';
+    }
+  });
+
+  if (editMode) renderItemPickerResults();
 }
+
+function renderItemPickerResults() {
+  const q = (document.getElementById('ip-search')?.value || '').toLowerCase();
+  const results = document.getElementById('ip-results');
+  if (!results || !itemData) return;
+  const entries = Object.entries(itemData).filter(([, it]) =>
+    !q || it.name.toLowerCase().includes(q)
+  ).sort((a, b) => a[1].name.localeCompare(b[1].name)).slice(0, 50);
+  results.innerHTML = entries.map(([slug, it]) => {
+    const color = RARITY_COLORS[(it.rarity || '').toLowerCase()] || '#888';
+    const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
+    const has = (char.inventory || []).some(i => i.slug === slug);
+    return `<div class="item-row" style="${has ? 'opacity:0.4' : 'cursor:pointer'}" onclick="${has ? '' : `addLibraryItem('${slug}')`}">
+      <div class="item-name">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle"></span>
+        ${escHtml(it.name)}
+        <span style="font-size:9px;color:#888;margin-left:4px">${escHtml(it.rarity || '')}</span>
+      </div>
+      <div class="item-qty">${cost}</div>
+    </div>`;
+  }).join('');
+  if (!entries.length) results.innerHTML = '<div style="font-size:11px;color:#888;padding:4px">No items found.</div>';
+}
+
+window.toggleItemPicker = () => {
+  const el = document.getElementById('item-picker');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el.style.display === 'block') renderItemPickerResults();
+};
+
+window.filterItemPicker = () => renderItemPickerResults();
+
+window.addLibraryItem = (slug) => {
+  const it = itemData?.[slug];
+  if (!it) return;
+  const inventory = [...(char.inventory || []), { name: it.name, qty: 1, slug, cost_gp: it.cost_gp }];
+  save({ inventory }).then(() => renderActiveTab());
+  log('item', `Added library item: ${it.name}`);
+};
 
 function choicePickLimit(cfg, level) {
   if (cfg.pick_by_level) {
@@ -591,7 +816,7 @@ function renderNotes(el) {
 // ── Global handlers ────────────────────────────────────────
 
 window.toggleLevel = (lvl) => { expandedLevels[lvl] = expandedLevels[lvl] === false ? true : false; renderActiveTab(); };
-window.switchTab = (i) => { activeTab = i; render(); };
+window.switchTab = (i) => { activeTab = i; _expandedItems = {}; render(); };
 window.toggleEdit = () => { editMode = !editMode; renderActiveTab(); };
 
 window.openHpEditor = () => {
@@ -692,13 +917,62 @@ window.toggleShield = () => {
   save({ armor }).then(() => renderActiveTab());
 };
 
+window.toggleItemDetail = (i) => {
+  const el = document.getElementById(`item-detail-${i}`);
+  const arrow = document.getElementById(`item-arrow-${i}`);
+  if (el) {
+    const isOpen = el.style.display !== 'none';
+    el.style.display = isOpen ? 'none' : 'block';
+    if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
+    _expandedItems[i] = !isOpen;
+  }
+};
+
+window.toggleEquip = (i) => {
+  const inventory = JSON.parse(JSON.stringify(char.inventory || []));
+  inventory[i].equipped = !inventory[i].equipped;
+  if (!inventory[i].equipped) inventory[i].attuned = false;
+  save({ inventory }).then(() => renderActiveTab());
+  log('item', `Toggled equip ${inventory[i].name}: ${inventory[i].equipped}`);
+};
+
+window.toggleAttune = (i) => {
+  const inventory = JSON.parse(JSON.stringify(char.inventory || []));
+  const item = inventory[i];
+  const lib = item.slug ? (itemData || {})[item.slug] : findItemByName(item.name);
+  if (!lib || lib.attunement !== 'Yes') return;
+  const newVal = !item.attuned;
+  if (newVal) {
+    const currentAttuned = inventory.filter((it, idx) => {
+      if (idx === i) return false;
+      const l = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
+      return l && l.attunement === 'Yes' && it.attuned;
+    }).length;
+    if (currentAttuned >= 3) {
+      alert('Already attuned to 3 items. Unequip another item first.');
+      return;
+    }
+  }
+  item.attuned = newVal;
+  if (newVal) item.equipped = true;
+  save({ inventory }).then(() => renderActiveTab());
+  log('item', `Toggled attune ${item.name}: ${item.attuned}`);
+};
+
 window.addItem = () => {
   const name = document.getElementById('item-name')?.value.trim();
   if (!name) return;
   const qty = parseInt(document.getElementById('item-qty')?.value) || 1;
-  const inventory = [...(char.inventory || []), { name, qty }];
+  const lib = findItemByName(name);
+  const entry = { name, qty };
+  if (lib) {
+    const slug = Object.keys(itemData || {}).find(k => itemData[k] === lib);
+    if (slug) entry.slug = slug;
+    entry.cost_gp = lib.cost_gp;
+  }
+  const inventory = [...(char.inventory || []), entry];
   save({ inventory }).then(() => renderActiveTab());
-  log('item', `Added item: ${name} x${qty}`);
+  log('item', `Added item: ${name} x${qty}${lib ? ' (linked)' : ''}`);
 };
 
 window.removeItem = (i) => {
