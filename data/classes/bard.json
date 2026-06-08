@@ -1,0 +1,88 @@
+{
+  "key": "bard",
+  "name": "Bard",
+  "hit_die": 8,
+  "saving_throws": ["dex", "cha"],
+  "skill_choices": ["Acrobatics", "Athletics", "Deception", "History", "Insight", "Intimidation", "Investigation", "Medicine", "Nature", "Perception", "Performance", "Persuasion", "Religion", "Sleight of Hand", "Stealth"],
+  "skill_count": 3,
+  "subclasses": {
+    "lore": {
+      "name": "Colegio del Saber",
+      "description": "Los bardos del Colegio del Saber conocen algo sobre casi todo y usan su conocimiento para ayudar a sus aliados.",
+      "features_by_level": {
+        "3": ["Palabras Hirientes", "Proficiencias Extra"],
+        "6": ["Secretos Mágicos Adicionales"],
+        "14": ["Habilidad Sin Par"]
+      }
+    },
+    "valor": {
+      "name": "Colegio del Valor",
+      "description": "Los bardos del Colegio del Valor son bardos marciales que inspiran a sus aliados en combate.",
+      "features_by_level": {
+        "3": ["Proficiencias Extra", "Inspiración de Combate"],
+        "6": ["Ataque Extra"],
+        "14": ["Magia de Batalla"]
+      }
+    },
+    "glamour": {
+      "name": "Colegio del Glamour",
+      "description": "Los bardos del Colegio del Glamour dominaron su arte en el vibrante reino del Feywild.",
+      "features_by_level": {
+        "3": ["Manto de Inspiración", "Actuación Cautivadora"],
+        "6": ["Manto de Majestad"],
+        "14": ["Majestad Inquebrantable"]
+      }
+    }
+  },
+  "spells": {
+    "vicious_mockery": { "name": "Burla Cruel", "level": 0, "school": "Encantamiento", "description": "Lanzas una cadena de insultos a una criatura a 60 pies. Hace una tirada de Sabiduría o recibe 1d4 de daño psíquico y tiene desventaja en su próximo ataque." },
+    "minor_illusion": { "name": "Ilusión Menor", "level": 0, "school": "Ilusión", "description": "Creas un sonido o imagen ilusoria dentro del alcance que dura 1 minuto." },
+    "prestidigitation": { "name": "Prestidigitación", "level": 0, "school": "Transmutación", "description": "Truco menor que crea pequeños efectos mágicos sensoriales." },
+    "thunderwave": { "name": "Ola de Trueno", "level": 1, "school": "Evocación", "description": "Una ola de fuerza trueno barre desde ti. Cada criatura en un cubo de 15 pies debe hacer una salvación de Constitución o recibe 2d8 de daño de trueno y es empujada 10 pies." },
+    "healing_word": { "name": "Palabra Sanadora", "level": 1, "school": "Evocación", "description": "Una criatura que elijas recupera puntos de golpe igual a 1d4 + tu modificador de Carisma." },
+    "charm_person": { "name": "Encantar Persona", "level": 1, "school": "Encantamiento", "description": "Intentas encantar a un humanoide que puedas ver. Debe superar una tirada de Sabiduría o queda encantado durante 1 hora." },
+    "sleep": { "name": "Sueño", "level": 1, "school": "Encantamiento", "description": "Envías criaturas a un sueño mágico. Tira 5d8 para determinar cuántos PG de criaturas puedes afectar." },
+    "faerie_fire": { "name": "Fuego de las Hadas", "level": 1, "school": "Evocación", "description": "Cada objeto y criatura en un cubo de 20 pies queda delineado en luz azul, verde o violeta. Los ataques contra criaturas afectadas tienen ventaja." },
+    "shatter": { "name": "Estallido", "level": 2, "school": "Evocación", "description": "Un súbito sonido estridente dolorosamente intenso. Cada criatura en una esfera de 10 pies recibe 3d8 de daño de trueno." },
+    "hold_person": { "name": "Paralizar Persona", "level": 2, "school": "Encantamiento", "description": "Elige a un humanoide que puedas ver. Debe superar una tirada de Sabiduría o queda paralizado durante 1 minuto." },
+    "invisibility": { "name": "Invisibilidad", "level": 2, "school": "Ilusión", "description": "Una criatura que toques se vuelve invisible hasta el fin del hechizo. El hechizo termina si la criatura ataca o lanza un hechizo." },
+    "suggestion": { "name": "Sugestión", "level": 2, "school": "Encantamiento", "description": "Sugieres una acción a una criatura que puedas ver. Debe superar una tirada de Sabiduría o sigue la sugerencia durante 8 horas." },
+    "hypnotic_pattern": { "name": "Patrón Hipnótico", "level": 3, "school": "Ilusión", "description": "Creas un patrón de colores entrelazados. Cada criatura en el cubo de 30 pies que lo vea debe superar Sabiduría o queda encantada y paralizada." },
+    "fear": { "name": "Miedo", "level": 3, "school": "Ilusión", "description": "Proyectas una imagen fantasmal del peor miedo de cada criatura. Cada criatura en un cono de 30 pies debe superar Sabiduría o queda asustada." }
+  },
+  "features_by_level": {
+    "1": ["Lanzamiento de Conjuros", "Inspiración Bárdica (d6)"],
+    "2": ["Maestro de Todo", "Canción de Descanso (d6)"],
+    "3": ["Experiencia", "Colegio Bárdico"],
+    "4": ["Mejora de Puntuación de Característica"],
+    "5": ["Inspiración Bárdica (d8)", "Fuente de Inspiración"],
+    "6": ["Contramovimiento", "Rasgo del Colegio Bárdico"],
+    "7": [],
+    "8": ["Mejora de Puntuación de Característica"],
+    "9": ["Canción de Descanso (d8)"],
+    "10": ["Inspiración Bárdica (d10)", "Experiencia", "Secretos Mágicos"],
+    "11": [],
+    "12": ["Mejora de Puntuación de Característica"],
+    "13": ["Canción de Descanso (d10)"],
+    "14": ["Secretos Mágicos", "Rasgo del Colegio Bárdico"],
+    "15": ["Inspiración Bárdica (d12)"],
+    "16": ["Mejora de Puntuación de Característica"],
+    "17": ["Canción de Descanso (d12)"],
+    "18": ["Secretos Mágicos"],
+    "19": ["Mejora de Puntuación de Característica"],
+    "20": ["Inspiración Superior"]
+  },
+  "spells_known_by_level": { "1":4,"2":5,"3":6,"4":7,"5":8,"6":9,"7":10,"8":11,"9":12,"10":14,"11":15,"12":15,"13":16,"14":18,"15":19,"16":19,"17":20,"18":22,"19":22,"20":22 },
+  "cantrips_known_by_level": { "1":2,"4":3,"10":4 },
+  "spell_slots_by_level": {
+    "1":{"1":2},"2":{"1":3},"3":{"1":4,"2":2},"4":{"1":4,"2":3},
+    "5":{"1":4,"2":3,"3":2},"6":{"1":4,"2":3,"3":3},"7":{"1":4,"2":3,"3":3,"4":1},
+    "8":{"1":4,"2":3,"3":3,"4":2},"9":{"1":4,"2":3,"3":3,"4":3,"5":1},
+    "10":{"1":4,"2":3,"3":3,"4":3,"5":2},"11":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1},
+    "12":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1},"13":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1,"7":1},
+    "14":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1,"7":1},"15":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1,"7":1,"8":1},
+    "16":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1,"7":1,"8":1},"17":{"1":4,"2":3,"3":3,"4":3,"5":2,"6":1,"7":1,"8":1,"9":1},
+    "18":{"1":4,"2":3,"3":3,"4":3,"5":3,"6":1,"7":1,"8":1,"9":1},"19":{"1":4,"2":3,"3":3,"4":3,"5":3,"6":2,"7":1,"8":1,"9":1},
+    "20":{"1":4,"2":3,"3":3,"4":3,"5":3,"6":2,"7":2,"8":1,"9":1}
+  }
+}

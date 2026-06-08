@@ -1,0 +1,16 @@
+async function apiFetch(path, opts = {}) {
+  const options = { headers: { 'Content-Type': 'application/json' }, ...opts };
+  if (opts.body) options.body = JSON.stringify(opts.body);
+  const res = await fetch(path, options);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export const api = {
+  getClass: (key) => apiFetch(`/api/classes/${key}`),
+  getBackgrounds: () => apiFetch('/api/backgrounds'),
+  getCharacters: () => apiFetch('/api/characters'),
+  getCharacter: (id) => apiFetch(`/api/characters/${id}`),
+  createCharacter: (data) => apiFetch('/api/characters', { method: 'POST', body: data }),
+  updateCharacter: (id, data) => apiFetch(`/api/characters/${id}`, { method: 'PUT', body: data }),
+};

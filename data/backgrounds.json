@@ -1,0 +1,15 @@
+{
+  "acolyte": { "name": "Acolyte", "skill_proficiencies": ["Insight", "Religion"], "tool_proficiencies": [], "languages": 2, "feature": "Shelter of the Faithful" },
+  "charlatan": { "name": "Charlatan", "skill_proficiencies": ["Deception", "Sleight of Hand"], "tool_proficiencies": ["Disguise kit", "Forgery kit"], "languages": 0, "feature": "False Identity" },
+  "criminal": { "name": "Criminal", "skill_proficiencies": ["Deception", "Stealth"], "tool_proficiencies": ["Thieves' tools", "Gaming set"], "languages": 0, "feature": "Criminal Contact" },
+  "entertainer": { "name": "Entertainer", "skill_proficiencies": ["Acrobatics", "Performance"], "tool_proficiencies": ["Disguise kit", "Musical instrument"], "languages": 0, "feature": "By Popular Demand" },
+  "folk_hero": { "name": "Folk Hero", "skill_proficiencies": ["Animal Handling", "Survival"], "tool_proficiencies": ["Artisan's tools", "Vehicles (land)"], "languages": 0, "feature": "Rustic Hospitality" },
+  "guild_artisan": { "name": "Guild Artisan", "skill_proficiencies": ["Insight", "Persuasion"], "tool_proficiencies": ["Artisan's tools"], "languages": 1, "feature": "Guild Membership" },
+  "hermit": { "name": "Hermit", "skill_proficiencies": ["Medicine", "Religion"], "tool_proficiencies": ["Herbalism kit"], "languages": 1, "feature": "Discovery" },
+  "noble": { "name": "Noble", "skill_proficiencies": ["History", "Persuasion"], "tool_proficiencies": ["Gaming set"], "languages": 1, "feature": "Position of Privilege" },
+  "outlander": { "name": "Outlander", "skill_proficiencies": ["Athletics", "Survival"], "tool_proficiencies": ["Musical instrument"], "languages": 1, "feature": "Wanderer" },
+  "sage": { "name": "Sage", "skill_proficiencies": ["Arcana", "History"], "tool_proficiencies": [], "languages": 2, "feature": "Researcher" },
+  "sailor": { "name": "Sailor", "skill_proficiencies": ["Athletics", "Perception"], "tool_proficiencies": ["Navigator's tools", "Vehicles (water)"], "languages": 0, "feature": "Ship's Passage" },
+  "soldier": { "name": "Soldier", "skill_proficiencies": ["Athletics", "Intimidation"], "tool_proficiencies": ["Gaming set", "Vehicles (land)"], "languages": 0, "feature": "Military Rank" },
+  "urchin": { "name": "Urchin", "skill_proficiencies": ["Sleight of Hand", "Stealth"], "tool_proficiencies": ["Disguise kit", "Thieves' tools"], "languages": 0, "feature": "City Secrets" }
+}
