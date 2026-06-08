@@ -36,6 +36,31 @@ const ARMORS = [
   { key: 'plate',       name: 'Plate',           type: 'heavy',  base: 18, dex: false, maxDex: 0 },
 ];
 
+const BASE_WEAPONS = {
+  'dagger':        { name: 'Dagger',        die: '1d4', type: 'piercing',   props: ['finesse', 'light', 'thrown'] },
+  'shortsword':    { name: 'Shortsword',    die: '1d6', type: 'piercing',   props: ['finesse', 'light'] },
+  'longsword':     { name: 'Longsword',     die: '1d8', type: 'slashing',   props: ['versatile (1d10)'] },
+  'greatsword':    { name: 'Greatsword',    die: '2d6', type: 'slashing',   props: ['heavy', 'two-handed'] },
+  'rapier':        { name: 'Rapier',        die: '1d8', type: 'piercing',   props: ['finesse'] },
+  'shortbow':      { name: 'Shortbow',      die: '1d6', type: 'piercing',   props: ['ammunition', 'two-handed'] },
+  'longbow':       { name: 'Longbow',       die: '1d8', type: 'piercing',   props: ['ammunition', 'heavy', 'two-handed'] },
+  'light-crossbow':{ name: 'Light Crossbow',die: '1d8', type: 'piercing',   props: ['ammunition', 'loading', 'two-handed'] },
+  'handaxe':       { name: 'Handaxe',       die: '1d6', type: 'slashing',   props: ['light', 'thrown'] },
+  'battleaxe':     { name: 'Battleaxe',     die: '1d8', type: 'slashing',   props: ['versatile (1d10)'] },
+  'warhammer':     { name: 'Warhammer',     die: '1d8', type: 'bludgeoning',props: ['versatile (1d10)'] },
+  'scimitar':      { name: 'Scimitar',      die: '1d6', type: 'slashing',   props: ['finesse', 'light'] },
+  'quarterstaff':  { name: 'Quarterstaff',  die: '1d6', type: 'bludgeoning',props: ['versatile (1d8)'] },
+  'mace':          { name: 'Mace',          die: '1d6', type: 'bludgeoning',props: [] },
+  'spear':         { name: 'Spear',         die: '1d6', type: 'piercing',   props: ['thrown', 'versatile (1d8)'] },
+  'hand-crossbow': { name: 'Hand Crossbow', die: '1d6', type: 'piercing',   props: ['ammunition', 'light', 'loading'] },
+  'heavy-crossbow':{ name: 'Heavy Crossbow',die: '1d10',type: 'piercing',   props: ['ammunition', 'heavy', 'loading', 'two-handed'] },
+  'glaive':        { name: 'Glaive',        die: '1d10',type: 'slashing',   props: ['heavy', 'reach', 'two-handed'] },
+  'halberd':       { name: 'Halberd',       die: '1d10',type: 'slashing',   props: ['heavy', 'reach', 'two-handed'] },
+  'morningstar':   { name: 'Morningstar',   die: '1d8', type: 'piercing',   props: [] },
+  'whip':          { name: 'Whip',          die: '1d4', type: 'slashing',   props: ['finesse', 'reach'] },
+  'club':          { name: 'Club',          die: '1d4', type: 'bludgeoning',props: ['light'] },
+};
+
 function getEquippedBonuses() {
   const inv = char.inventory || [];
   const out = { ac: 0, saves: 0 };
@@ -91,6 +116,8 @@ let itemData = null;
 let activeTab = 0;
 let editMode = false;
 let _expandedItems = {};
+let _pendingBaseItem = null;
+window._pendingBaseItemRef = { get: () => _pendingBaseItem, set: v => { _pendingBaseItem = v; } };
 
 function abilityMod(score) { return Math.floor((score - 10) / 2); }
 function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }
@@ -307,15 +334,25 @@ function renderCombat(el) {
       <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
     </div>
     ${weapons.length ? weapons.map((w, i) => {
-      const wLib = w.slug ? (itemData || {})[w.slug] : findItemByName(w.name);
-      const wBonus = wLib?.weapon_bonus || 0;
+      const linkedInv = w.linkedInvName ? (char.inventory || []).find(it => it.name === w.linkedInvName) : null;
+      const invLib = linkedInv ? (linkedInv.slug ? (itemData || {})[linkedInv.slug] : findItemByName(linkedInv.name)) : null;
+      const wBonus = invLib?.weapon_bonus || (w.slug ? (itemData || {})[w.slug]?.weapon_bonus : 0) || 0;
       const mod = abilityMod(scores[w.ability] || 10);
       const atk = fmtBonus(mod + (w.proficient ? pb : 0) + wBonus);
-      const dmg = `${w.damage_die || '1d6'}${mod >= 0 ? '+' : ''}${mod}`;
+      const dmgParts = [];
+      if (linkedInv?.base_weapon && BASE_WEAPONS[linkedInv.base_weapon]) dmgParts.push(BASE_WEAPONS[linkedInv.base_weapon].die);
+      else dmgParts.push(w.damage_die || '1d6');
+      const dmgDie = dmgParts[0];
+      const dmg = `${dmgDie}${mod >= 0 ? '+' : ''}${mod}`;
       const bonusTag = wBonus ? ` <span style="font-size:9px;color:#888">+${wBonus} eq</span>` : '';
+      const linkBadge = linkedInv
+        ? (linkedInv.equipped
+          ? '<span style="font-size:9px;color:#4a4;margin-left:4px">● in inventory</span>'
+          : '<span style="font-size:9px;color:#a84;margin-left:4px">⚠ unequipped</span>')
+        : '';
       return `<div class="weapon-row">
         <div>
-          <div class="weapon-name">${escHtml(w.name)}${bonusTag}</div>
+          <div class="weapon-name">${escHtml(w.name)}${bonusTag}${linkBadge}</div>
           <div style="font-size:10px;color:#888">${escHtml(w.type || '')}</div>
         </div>
         <div class="weapon-atk">${atk}</div>
@@ -325,7 +362,10 @@ function renderCombat(el) {
     }).join('') : '<div style="padding:8px;color:#888;font-size:12px">No weapons. Add one below.</div>'}
     ${editMode ? `
     <div class="add-row" style="flex-wrap:wrap;gap:6px;margin-top:8px">
-      <input class="input-field" id="w-name" placeholder="Weapon name" style="flex:2;min-width:120px">
+      <div style="flex:2;min-width:120px;position:relative">
+        <input class="input-field" id="w-name" placeholder="Weapon name" style="width:100%" oninput="onWeaponNameInput()">
+        <div id="w-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--card-bg);border:1px solid var(--gray-light);border-radius:4px;max-height:150px;overflow-y:auto"></div>
+      </div>
       <input class="input-field input-sm" id="w-die-qty" type="number" min="1" max="9" value="1" style="width:40px">
       <select class="input-field input-sm" id="w-die" style="width:60px">
         <option value="d4">d4</option>
@@ -338,7 +378,8 @@ function renderCombat(el) {
       <select class="input-field input-sm" id="w-ability">${['str','dex','cha'].map(a=>`<option value="${a}">${ABILITY_NAMES[a]}</option>`).join('')}</select>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="w-prof" checked> Prof</label>
       <button class="btn btn-primary btn-sm" onclick="addWeapon()">+ Add</button>
-    </div>` : ''}
+    </div>
+    <div id="w-link-status" style="font-size:10px;color:#888;margin-top:4px"></div>` : ''}
     ${char.class_key === 'bard' ? `
     <div class="section-title">Bardic Inspiration</div>
     <div style="display:flex;align-items:center;padding:8px 0">
@@ -569,6 +610,8 @@ function renderInventory(el) {
             <span style="color:#888;font-size:9px">${escHtml(lib.source)}</span>
             ${needsAt ? `<span style="font-size:8px;background:#555;color:#fff;padding:1px 5px;border-radius:8px">Requires Attunement</span>` : ''}
           </div>
+          ${item.base_weapon && BASE_WEAPONS[item.base_weapon] ? `<div style="font-size:10px;color:#888;margin-bottom:3px">Base: ${escHtml(BASE_WEAPONS[item.base_weapon].name)} (${BASE_WEAPONS[item.base_weapon].die} ${BASE_WEAPONS[item.base_weapon].type})</div>` : ''}
+          ${item.base_armor ? `<div style="font-size:10px;color:#888;margin-bottom:3px">Base: ${escHtml(ARMORS.find(a=>a.key===item.base_armor)?.name || item.base_armor)}</div>` : ''}
           ${bonusList.length ? `<div style="font-size:11px;margin-bottom:4px;color:${canBenefit ? 'var(--text)' : '#888'}">${bonusList.join(' · ')}</div>` : ''}
           ${!canBenefit && lib ? `<div style="font-size:10px;color:#a44;margin-bottom:3px">${!isEq ? 'Not equipped — bonuses inactive' : 'Not attuned — bonuses inactive'}</div>` : ''}
           <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;padding-top:4px;border-top:1px solid var(--gray-light)">
@@ -609,10 +652,30 @@ function renderInventory(el) {
   if (editMode) renderItemPickerResults();
 }
 
+function _findBaseWeapon(name) {
+  const n = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return Object.keys(BASE_WEAPONS).find(k => k.replace(/[^a-z0-9]/g, '') === n) || null;
+}
+
 function renderItemPickerResults() {
   const q = (document.getElementById('ip-search')?.value || '').toLowerCase();
   const results = document.getElementById('ip-results');
   if (!results || !itemData) return;
+
+  if (_pendingBaseItem) {
+    const it = itemData[_pendingBaseItem];
+    const isWeapon = it.base_weapon_type;
+    const choices = isWeapon ? Object.entries(BASE_WEAPONS) : Object.entries(ARMORS).filter(a => a[0] !== 'none');
+    results.innerHTML = `
+      <div style="margin-bottom:6px;font-size:11px;color:#888">Select base for <b>${escHtml(it.name)}</b>:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+        ${choices.map(([key, val]) => `<div class="pill" style="font-size:10px;cursor:pointer" onclick="confirmBaseItem('${_pendingBaseItem}','${key}')">${escHtml(val.name)}</div>`).join('')}
+      </div>
+      <div style="font-size:10px;color:#888;cursor:pointer" onclick="window._pendingBaseItemRef.set(null);renderItemPickerResults()">← Back to library</div>
+    `;
+    return;
+  }
+
   const entries = Object.entries(itemData).filter(([, it]) =>
     !q || it.name.toLowerCase().includes(q)
   ).sort((a, b) => a[1].name.localeCompare(b[1].name)).slice(0, 50);
@@ -620,10 +683,13 @@ function renderItemPickerResults() {
     const color = RARITY_COLORS[(it.rarity || '').toLowerCase()] || '#888';
     const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
     const has = (char.inventory || []).some(i => i.slug === slug);
-    return `<div class="item-row" style="${has ? 'opacity:0.4' : 'cursor:pointer'}" onclick="${has ? '' : `addLibraryItem('${slug}')`}">
+    const needsBase = it.base_weapon_type || it.base_armor_type;
+    const onClick = has ? '' : needsBase ? `window._pendingBaseItemRef.set('${slug}');renderItemPickerResults()` : `addLibraryItem('${slug}')`;
+    const tag = needsBase ? ' <span style="font-size:8px;color:#888">(select base)</span>' : '';
+    return `<div class="item-row" style="${has ? 'opacity:0.4' : 'cursor:pointer'}" onclick="${onClick}">
       <div class="item-name">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle"></span>
-        ${escHtml(it.name)}
+        ${escHtml(it.name)}${tag}
         <span style="font-size:9px;color:#888;margin-left:4px">${escHtml(it.rarity || '')}</span>
       </div>
       <div class="item-qty">${cost}</div>
@@ -640,9 +706,30 @@ window.toggleItemPicker = () => {
 
 window.filterItemPicker = () => renderItemPickerResults();
 
+window.confirmBaseItem = (slug, baseKey) => {
+  const it = itemData?.[slug];
+  if (!it) return;
+  const isWeapon = it.base_weapon_type;
+  const baseData = isWeapon ? BASE_WEAPONS[baseKey] : ARMORS.find(a => a.key === baseKey);
+  if (!baseData) return;
+  const displayName = `${baseData.name}, ${it.name.replace(/^[WeaponArmor]+,\s*/, '')}`;
+  const entry = { name: displayName, qty: 1, slug, cost_gp: it.cost_gp };
+  if (isWeapon) entry.base_weapon = baseKey;
+  else entry.base_armor = baseKey;
+  const inventory = [...(char.inventory || []), entry];
+  _pendingBaseItem = null;
+  save({ inventory }).then(() => renderActiveTab());
+  log('item', `Added library item: ${displayName} (base: ${baseKey})`);
+};
+
 window.addLibraryItem = (slug) => {
   const it = itemData?.[slug];
   if (!it) return;
+  if (it.base_weapon_type || it.base_armor_type) {
+    _pendingBaseItem = slug;
+    renderItemPickerResults();
+    return;
+  }
   const inventory = [...(char.inventory || []), { name: it.name, qty: 1, slug, cost_gp: it.cost_gp }];
   save({ inventory }).then(() => renderActiveTab());
   log('item', `Added library item: ${it.name}`);
@@ -883,20 +970,63 @@ window.editCoin = (coin) => {
   }
 };
 
+window.onWeaponNameInput = () => {
+  const q = document.getElementById('w-name')?.value.toLowerCase().trim();
+  const box = document.getElementById('w-suggestions');
+  const status = document.getElementById('w-link-status');
+  if (!q || !box) { if (box) box.style.display = 'none'; if (status) status.textContent = ''; return; }
+  const invItems = (char.inventory || []).filter(it => it.name.toLowerCase().includes(q));
+  if (!invItems.length) { box.style.display = 'none'; if (status) status.textContent = ''; return; }
+  box.style.display = 'block';
+  box.innerHTML = invItems.map(it => {
+    const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
+    const label = lib?.weapon_bonus ? `+${lib.weapon_bonus} ` : '';
+    const eq = it.equipped ? '● ' : '○ ';
+    const baseTag = it.base_weapon && BASE_WEAPONS[it.base_weapon] ? ` (${BASE_WEAPONS[it.base_weapon].die} ${BASE_WEAPONS[it.base_weapon].type})` : '';
+    return `<div style="padding:4px 8px;cursor:pointer;font-size:11px" onmouseover="this.style.background='var(--gray-bg)'" onmouseout="this.style.background=''" onclick="selectWeaponSuggestion('${escHtml(it.name)}')">${eq}${label}${escHtml(it.name)}${baseTag}</div>`;
+  }).join('');
+};
+
+function _dieParts(die) {
+  const m = die.match(/^(\d+)(d\d+)$/);
+  return m ? { qty: m[1], die: m[2] } : { qty: '1', die: 'd6' };
+}
+
+window.selectWeaponSuggestion = (name) => {
+  document.getElementById('w-name').value = name;
+  document.getElementById('w-suggestions').style.display = 'none';
+  const inv = (char.inventory || []).find(it => it.name === name);
+  const lib = inv?.slug ? (itemData || {})[inv.slug] : findItemByName(name);
+  const status = document.getElementById('w-link-status');
+  if (inv) {
+    status.textContent = inv.equipped ? '✓ Found in inventory (equipped)' : '⚠ Found in inventory (not equipped)';
+    status.style.color = inv.equipped ? '#4a4' : '#a84';
+    if (inv.base_weapon && BASE_WEAPONS[inv.base_weapon]) {
+      const bw = BASE_WEAPONS[inv.base_weapon];
+      const p = _dieParts(bw.die);
+      document.getElementById('w-die-qty').value = p.qty;
+      document.getElementById('w-die').value = p.die;
+      document.getElementById('w-type').value = bw.type;
+    }
+  }
+};
+
 window.addWeapon = () => {
   const name = document.getElementById('w-name')?.value.trim();
   if (!name) return;
-  const qty = parseInt(document.getElementById('w-die-qty')?.value) || 1;
-  const die = document.getElementById('w-die')?.value || 'd6';
-  const weapons = [...(char.weapons || []), {
-    name,
-    damage_die: `${qty}${die}`,
-    ability: document.getElementById('w-ability')?.value || 'str',
-    type: document.getElementById('w-type')?.value.trim() || '',
-    proficient: document.getElementById('w-prof')?.checked || false,
-  }];
+  let qty = document.getElementById('w-die-qty')?.value || '1';
+  let die = document.getElementById('w-die')?.value || 'd6';
+  let type = document.getElementById('w-type')?.value.trim() || '';
+  const ability = document.getElementById('w-ability')?.value || 'str';
+  const proficient = document.getElementById('w-prof')?.checked !== false;
+  const invMatch = (char.inventory || []).find(it => it.name.toLowerCase() === name.toLowerCase());
+  if (invMatch && invMatch.base_weapon && BASE_WEAPONS[invMatch.base_weapon]) {
+    const bw = BASE_WEAPONS[invMatch.base_weapon];
+    const p = _dieParts(bw.die);
+    qty = p.qty; die = p.die; type = bw.type;
+  }
+  const weapons = [...(char.weapons || []), { name, damage_die: `${qty}${die}`, type, ability, proficient, linkedInvName: invMatch ? invMatch.name : null }];
   save({ weapons }).then(() => renderActiveTab());
-  log('weapon', `Added weapon: ${name} (${qty}${die})`);
 };
 
 window.removeWeapon = (i) => {

@@ -196,7 +196,8 @@
     "attunement": "No",
     "cost_gp": 1980,
     "note": "Add armor cost for total",
-    "ac_bonus": 1
+    "ac_bonus": 1,
+    "base_armor_type": true
   },
   "armor-2": {
     "name": "Armor, +2",
@@ -205,7 +206,8 @@
     "attunement": "No",
     "cost_gp": 8910,
     "note": "Add armor cost for total",
-    "ac_bonus": 2
+    "ac_bonus": 2,
+    "base_armor_type": true
   },
   "armor-3": {
     "name": "Armor, +3",
@@ -214,7 +216,8 @@
     "attunement": "No",
     "cost_gp": 29700,
     "note": "Add armor cost for total",
-    "ac_bonus": 3
+    "ac_bonus": 3,
+    "base_armor_type": true
   },
   "armor-of-gleaming": {
     "name": "Armor of Gleaming",
@@ -4806,7 +4809,8 @@
     "attunement": "No",
     "cost_gp": 825,
     "note": "add cost of weapon",
-    "weapon_bonus": 1
+    "weapon_bonus": 1,
+    "base_weapon_type": true
   },
   "weapon-2": {
     "name": "Weapon, +2",
@@ -4815,7 +4819,8 @@
     "attunement": "No",
     "cost_gp": 3300,
     "note": "add cost of weapon",
-    "weapon_bonus": 2
+    "weapon_bonus": 2,
+    "base_weapon_type": true
   },
   "weapon-3": {
     "name": "Weapon, +3",
@@ -4824,7 +4829,8 @@
     "attunement": "No",
     "cost_gp": 9900,
     "note": "add cost of weapon",
-    "weapon_bonus": 3
+    "weapon_bonus": 3,
+    "base_weapon_type": true
   },
   "shortsword-1": {
     "name": "Shortsword, +1",
@@ -5085,7 +5091,8 @@
     "attunement": "No",
     "cost_gp": 1980,
     "note": "Add armor cost for total",
-    "ac_bonus": 1
+    "ac_bonus": 1,
+    "base_armor_type": true
   },
   "armor-2-dmg-2014": {
     "name": "Armor, +2",
@@ -5094,7 +5101,8 @@
     "attunement": "No",
     "cost_gp": 8910,
     "note": "Add armor cost for total",
-    "ac_bonus": 2
+    "ac_bonus": 2,
+    "base_armor_type": true
   },
   "armor-3-dmg-2014": {
     "name": "Armor, +3",
@@ -5103,7 +5111,8 @@
     "attunement": "No",
     "cost_gp": 29700,
     "note": "Add armor cost for total",
-    "ac_bonus": 3
+    "ac_bonus": 3,
+    "base_armor_type": true
   },
   "armor-of-invulnerability-dmg-2014": {
     "name": "Armor of Invulnerability",
@@ -8617,7 +8626,8 @@
     "attunement": "No",
     "cost_gp": 825,
     "note": "add cost of weapon",
-    "weapon_bonus": 1
+    "weapon_bonus": 1,
+    "base_weapon_type": true
   },
   "weapon-2-dmg-2014": {
     "name": "Weapon, +2",
@@ -8626,7 +8636,8 @@
     "attunement": "No",
     "cost_gp": 3300,
     "note": "add cost of weapon",
-    "weapon_bonus": 2
+    "weapon_bonus": 2,
+    "base_weapon_type": true
   },
   "weapon-3-dmg-2014": {
     "name": "Weapon, +3",
@@ -8635,7 +8646,8 @@
     "attunement": "No",
     "cost_gp": 9900,
     "note": "add cost of weapon",
-    "weapon_bonus": 3
+    "weapon_bonus": 3,
+    "base_weapon_type": true
   },
   "shortsword-1-dmg-2014": {
     "name": "Shortsword, +1",
