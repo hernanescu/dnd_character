@@ -9,8 +9,10 @@ async function apiFetch(path, opts = {}) {
 export const api = {
   getClass: (key) => apiFetch(`/api/classes/${key}`),
   getBackgrounds: () => apiFetch('/api/backgrounds'),
+  getSpells: (classKey) => apiFetch(`/api/spells?class=${classKey}`),
   getCharacters: () => apiFetch('/api/characters'),
   getCharacter: (id) => apiFetch(`/api/characters/${id}`),
   createCharacter: (data) => apiFetch('/api/characters', { method: 'POST', body: data }),
   updateCharacter: (id, data) => apiFetch(`/api/characters/${id}`, { method: 'PUT', body: data }),
+  deleteCharacter: (id) => apiFetch(`/api/characters/${id}`, { method: 'DELETE' }),
 };

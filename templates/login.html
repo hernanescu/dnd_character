@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D&D Character — Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+    }
+    .login-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 32px 28px;
+      width: 320px;
+      max-width: 90vw;
+    }
+    .login-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .login-sub {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+    .field-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+    .input-field {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid #333;
+      background: #222;
+      color: #eee;
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    .input-field:focus { border-color: #d4a373; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-primary { background: #d4a373; color: #111; }
+    .btn-primary:hover { background: #e0b084; }
+    .error { color: #e55; font-size: 12px; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="login-title">D&amp;D Character</div>
+    <div class="login-sub">Sign in to manage your characters</div>
+    <form id="login-form">
+      <div class="field-label">Username</div>
+      <input class="input-field" id="username" type="text" autocomplete="username" required autofocus>
+      <div class="field-label">Password</div>
+      <input class="input-field" id="password" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit">Sign In</button>
+      <div class="error" id="error">Invalid credentials</div>
+    </form>
+  </div>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const errEl = document.getElementById('error');
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        if (!res.ok) { errEl.style.display = 'block'; return; }
+        window.location = '/';
+      } catch {
+        errEl.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

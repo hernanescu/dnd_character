@@ -1,7 +1,9 @@
 import os
 import json
 import sqlite3
-from flask import Flask, g, jsonify, request, render_template
+import secrets
+from functools import wraps
+from flask import Flask, g, jsonify, request, render_template, session, redirect
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEFAULT_DB = os.path.join(BASE_DIR, 'data', 'dnd.db')
@@ -12,11 +14,32 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, 'static'),
     template_folder=os.path.join(BASE_DIR, 'templates'),
 )
+_KEY_FILE = os.path.join(BASE_DIR, 'data', '.secret_key')
+try:
+    app.secret_key = open(_KEY_FILE).read().strip()
+except FileNotFoundError:
+    _k = secrets.token_hex(32)
+    os.makedirs(os.path.dirname(_KEY_FILE), exist_ok=True)
+    open(_KEY_FILE, 'w').write(_k)
+    app.secret_key = _k
+
+_USERS = {'hernan': 'hernan@2026!'}
+
+_PUBLIC_ROUTES = {'/login', '/api/login', '/api/me', '/api/health'}
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user' not in session:
+            return jsonify({'error': 'unauthorized'}), 401
+        return f(*args, **kwargs)
+    return decorated
 
 _JSON_FIELDS = {
     'ability_scores', 'skill_proficiencies', 'expertise',
     'spells_known', 'spell_slots', 'features', 'weapons',
-    'inventory', 'coins', 'notes',
+    'inventory', 'coins', 'notes', 'choices',
 }
 
 
@@ -66,9 +89,23 @@ def init_db():
             inventory TEXT NOT NULL DEFAULT '[]',
             coins TEXT NOT NULL DEFAULT '{"pp":0,"gp":0,"ep":0,"sp":0,"cp":0}',
             notes TEXT NOT NULL DEFAULT '[]',
+            momentum INTEGER NOT NULL DEFAULT 0,
+            supply INTEGER NOT NULL DEFAULT 5,
+            stress INTEGER NOT NULL DEFAULT 5,
+            choices TEXT NOT NULL DEFAULT '{}',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ''')
+    db.commit()
+    for col in ('momentum', 'supply', 'stress'):
+        try:
+            db.execute(f'ALTER TABLE characters ADD COLUMN {col} INTEGER')
+        except Exception:
+            pass
+    try:
+        db.execute("ALTER TABLE characters ADD COLUMN choices TEXT NOT NULL DEFAULT '{}'")
+    except Exception:
+        pass
     db.commit()
 
 
@@ -82,7 +119,38 @@ def _row_to_character(row):
 
 @app.route('/')
 def index():
+    if 'user' not in session:
+        return redirect('/login')
     return render_template('index.html')
+
+
+@app.route('/login')
+def login_page():
+    return render_template('login.html')
+
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    username = (data or {}).get('username', '').strip()
+    password = (data or {}).get('password', '').strip()
+    if username in _USERS and _USERS[username] == password:
+        session['user'] = username
+        return jsonify({'ok': True})
+    return jsonify({'ok': False, 'error': 'Invalid credentials'}), 401
+
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    session.pop('user', None)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/me')
+def api_me():
+    if 'user' not in session:
+        return jsonify({'authenticated': False}), 401
+    return jsonify({'authenticated': True, 'user': session['user']})
 
 
 @app.route('/api/health')
@@ -99,6 +167,19 @@ def get_class(key):
         return jsonify(json.load(f))
 
 
+@app.route('/api/spells')
+def get_spells():
+    class_filter = request.args.get('class', '').strip().lower()
+    path = os.path.join(_data_dir(), 'spells.json')
+    if not os.path.isfile(path):
+        return jsonify({}), 200
+    with open(path) as f:
+        spells = json.load(f)
+    if class_filter:
+        spells = {k: v for k, v in spells.items() if class_filter in v.get('classes', [])}
+    return jsonify(spells)
+
+
 @app.route('/api/backgrounds')
 def get_backgrounds():
     path = os.path.join(_data_dir(), 'backgrounds.json')
@@ -109,6 +190,7 @@ def get_backgrounds():
 
 
 @app.route('/api/characters', methods=['GET'])
+@login_required
 def list_characters():
     db = get_db()
     rows = db.execute(
@@ -118,6 +200,7 @@ def list_characters():
 
 
 @app.route('/api/characters', methods=['POST'])
+@login_required
 def create_character():
     data = request.get_json()
     db = get_db()
@@ -131,6 +214,9 @@ def create_character():
         'hp_max': data.get('hp_max', 8),
         'hp_current': data.get('hp_current', 8),
         'ac': data.get('ac', 10),
+        'momentum': data.get('momentum', 0),
+        'supply': data.get('supply', 5),
+        'stress': data.get('stress', 5),
     }
     for f in _JSON_FIELDS:
         val = data.get(f)
@@ -144,6 +230,7 @@ def create_character():
 
 
 @app.route('/api/characters/<int:char_id>', methods=['GET'])
+@login_required
 def get_character(char_id):
     db = get_db()
     row = db.execute('SELECT * FROM characters WHERE id = ?', (char_id,)).fetchone()
@@ -153,6 +240,7 @@ def get_character(char_id):
 
 
 @app.route('/api/characters/<int:char_id>', methods=['PUT'])
+@login_required
 def update_character(char_id):
     data = request.get_json()
     db = get_db()
@@ -169,8 +257,39 @@ def update_character(char_id):
     return jsonify(_row_to_character(row))
 
 
+@app.route('/api/characters/<int:char_id>', methods=['DELETE'])
+@login_required
+def delete_character(char_id):
+    db = get_db()
+    row = db.execute('SELECT id FROM characters WHERE id = ?', (char_id,)).fetchone()
+    if not row:
+        return jsonify({'error': 'not found'}), 404
+    db.execute('DELETE FROM characters WHERE id = ?', (char_id,))
+    db.commit()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/log', methods=['POST'])
+def api_log():
+    data = request.get_json(silent=True) or {}
+    log_path = os.path.join(BASE_DIR, 'data', 'app.log')
+    try:
+        ts = data.get('t', '')
+        cat = data.get('c', '?')
+        msg = data.get('m', '')
+        extra = json.dumps(data.get('d')) if data.get('d') else ''
+        line = f'[{ts}] [{cat}] {msg} {extra}\n'.strip() + '\n'
+        with open(log_path, 'a') as f:
+            f.write(line)
+    except Exception:
+        pass
+    return '', 204
+
+
 if __name__ == '__main__':
     os.makedirs(os.path.join(BASE_DIR, 'data', 'classes'), exist_ok=True)
     with app.app_context():
         init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', '1') == '1'
+    app.run(host='0.0.0.0', port=port, debug=debug)

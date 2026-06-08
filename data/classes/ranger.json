@@ -1,0 +1,378 @@
+{
+  "key": "ranger",
+  "name": "Ranger",
+  "hit_die": 10,
+  "saving_throws": [
+    "str",
+    "dex"
+  ],
+  "skill_choices": [
+    "Acrobatics",
+    "Animal Handling",
+    "Arcana",
+    "Athletics",
+    "Deception",
+    "History",
+    "Insight",
+    "Intimidation",
+    "Investigation",
+    "Medicine",
+    "Nature",
+    "Perception",
+    "Performance",
+    "Persuasion",
+    "Religion",
+    "Sleight of Hand",
+    "Stealth",
+    "Survival"
+  ],
+  "skill_count": 3,
+  "subclasses": {
+    "drakewarden": {
+      "name": "Ranger: Drakewarden",
+      "description": "Your connection to the natural world takes the form of a draconic spirit, which can manifest in physical form as a drake. As your powers grow, your drake grows as well, blossoming from a small four-legged companion to a majestic winged creature large and strong enough for you to ride. Along the way, you gain an increasing share of the awe-inspiring power of dragons.",
+      "features_by_level": {
+        "3": [
+          "Draconic Gift",
+          "Drake Companion"
+        ],
+        "7": [
+          "Bond of Fang and Scale"
+        ],
+        "11": [
+          "Drake’s Breath"
+        ],
+        "15": [
+          "Perfected Bond"
+        ]
+      },
+      "feature_descriptions": {
+        "Draconic Gift": "At 3rd level, the bond you share with your drake creates a connection to dragonkind, granting you understanding and empowering your presence. You gain the following benefits:",
+        "Drake Companion": "At 3rd level, as an action, you can magically summon the drake that is bound to you. It appears in an unoccupied space of your choice within 30 feet of you. The drake is friendly to you and your companions, and it obeys your commands. See its game statistics in the accompanying Drake Companion stat block, which uses your proficiency bonus (PB) in several places. Whenever you summon the drake, choose a damage type listed in its Draconic Essence trait. You can determine the cosmetic characteristics of the drake, such as its color, its scale texture, or any visible effect of its Draconic Essence; your choice has no effect on its game statistics. In combat, the drake shares your initiative count, but it takes its turn immediately after yours. It can move and use its reaction on its own, but the only action it takes on its turn is the Dodge action, unless you take a bonus action on your turn to command it to take another action. That action can be one in its stat block or some other action. If you are incapacitated, the drake can take any action of its choice, not just Dodge. The drake remains until it is reduced to 0 hit points, until you use this feature to summon the drake again, or until you die. Anything the drake was wearing or carrying is left behind when the drake vanishes. Once you summon the drake, you can’t do so again until you finish a long rest, unless you expend a spell slot of 1st level or higher to summon it.",
+        "Bond of Fang and Scale": "At 7th level the bond you share with your drake intensifies, protecting you and stoking the drake’s fury. When you summon your drake, it grows wings on its back and gains a flying speed equal to its walking speed. In addition, while your drake is summoned, you and the drake gain the following benefits: Drake Mount. The drake grows to Medium size. Reflecting your special bond, you can use the drake as a mount if your size is Medium or smaller. While you are riding your drake, it can’t use the flying speed of this feature. Magic Fang. The drake’s Bite attack deals an extra 1d6 damage of the type chosen for the drake’s Draconic Essence. Resistance. You gain resistance to the damage type chosen for the drake’s Draconic Essence.",
+        "Drake’s Breath": "At 11th level, as an action, you can exhale a 30-foot cone of damaging breath or cause your drake to exhale it. Choose acid, cold, fire, lightning, or poison damage (your choice doesn’t have to match your drake’s Draconic Essence). Each creature in the cone must make a Dexterity saving throw against your spell save DC, taking 8d6 damage on a failed save, or half as much damage on a successful one. This damage increases to 10d6 when you reach 15th level in this class. Once you use this feature, you can’t do so again until you finish a long rest, unless you expend a spell slot of 3rd level or higher to use it again.",
+        "Perfected Bond": "At 15th level, your bond to your drake reaches the pinnacle of its power. While your drake is summoned, you and the drake gain the following benefits: Empowered Bite. The drake’s Bite attack deals an extra 1d6 damage of the type chosen for its Draconic Essence (for a total of 2d6 extra damage). Large Drake. The drake grows to Large size. When you ride your drake, it is no longer prohibited from using the flying speed of Bond of Fang and Scale. Reflexive Resistance. When either you or the drake takes damage while you’re within 30 feet of each other, you can use your reaction to give yourself or the drake resistance to that instance of damage. You can use this reaction a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest."
+      }
+    }
+  },
+  "spells": [
+    "absorb-elements",
+    "alarm",
+    "animal-friendship",
+    "beast-bond",
+    "cure-wounds",
+    "detect-magic",
+    "detect-poison-and-disease",
+    "ensnaring-strike",
+    "entangle",
+    "fog-cloud",
+    "goodberry",
+    "hail-of-thorns",
+    "hunters-mark",
+    "jump",
+    "longstrider",
+    "searing-smite",
+    "snare",
+    "speak-with-animals",
+    "sudden-awakening",
+    "wild-cunning",
+    "zephyr-strike",
+    "aid",
+    "air-bubble",
+    "animal-messenger",
+    "barkskin",
+    "beast-sense",
+    "cordon-of-arrows",
+    "darkvision",
+    "enhance-ability",
+    "find-traps",
+    "gust-of-wind",
+    "healing-spirit",
+    "lesser-restoration",
+    "locate-animals-or-plants",
+    "locate-object",
+    "magic-weapon",
+    "pass-without-trace",
+    "protection-from-poison",
+    "silence",
+    "spike-growth",
+    "summon-beast",
+    "ashardalons-stride",
+    "conjure-animals",
+    "conjure-barrage",
+    "daylight",
+    "elemental-weapon",
+    "flame-arrows",
+    "flame-stride",
+    "lightning-arrow",
+    "meld-into-stone",
+    "nondetection",
+    "plant-growth",
+    "protection-from-energy",
+    "revivify",
+    "speak-with-plants",
+    "summon-fey",
+    "water-breathing",
+    "water-walk",
+    "wind-wall",
+    "conjure-woodland-beings",
+    "dominate-beast",
+    "freedom-of-movement",
+    "grasping-vine",
+    "guardian-of-nature",
+    "locate-creature",
+    "stoneskin",
+    "summon-elemental",
+    "commune-with-nature",
+    "conjure-volley",
+    "greater-restoration",
+    "steel-wind-strike",
+    "swift-quiver",
+    "tree-stride",
+    "wrath-of-nature"
+  ],
+  "features_by_level": {
+    "1": [
+      "Favored Enemy",
+      "Natural Explorer",
+      "Deft Explorer",
+      "Favored Foe"
+    ],
+    "2": [
+      "Fighting Style",
+      "Spellcasting",
+      "Spellcasting Focus"
+    ],
+    "3": [
+      "Primeval Awareness",
+      "Ranger Conclave",
+      "Primal Awareness"
+    ],
+    "4": [
+      "Ability Score Improvement",
+      "Martial Versatility"
+    ],
+    "5": [
+      "Extra Attack"
+    ],
+    "6": [
+      "Favored Enemy Improvement",
+      "Natural Explorer Improvement",
+      "Deft Explorer Improvement"
+    ],
+    "7": [
+      "Ranger Conclave feature"
+    ],
+    "8": [
+      "Ability Score Improvement",
+      "Land's Stride",
+      "Martial Versatility"
+    ],
+    "9": [],
+    "10": [
+      "Natural Explorer Improvement",
+      "Hide in Plain Sight",
+      "Deft Explorer Feature",
+      "Nature's Veil"
+    ],
+    "11": [
+      "Ranger Conclave feature"
+    ],
+    "12": [
+      "Ability Score Improvement",
+      "Martial Versatility"
+    ],
+    "13": [],
+    "14": [
+      "Favored Enemy Improvement",
+      "Vanish"
+    ],
+    "15": [
+      "Ranger Conclave feature"
+    ],
+    "16": [
+      "Ability Score Improvement",
+      "Martial Versatility"
+    ],
+    "17": [],
+    "18": [
+      "Feral Senses"
+    ],
+    "19": [
+      "Ability Score Improvement",
+      "Martial Versatility"
+    ],
+    "20": [
+      "Foe Slayer"
+    ]
+  },
+  "feature_descriptions": {
+    "Favored Enemy": "Beginning at 1st level, you have significant experience studying, tracking, hunting, and even talking to a certain type of enemy. Choose a type of favored enemy: aberrations, beasts, celestials, constructs, dragons, elementals, fey, fiends, giants, monstrosities, oozes, plants, or undead. Alternatively, you can select two races of humanoid (such as gnolls and orcs) as favored enemies. You have advantage on Wisdom (Survival) checks to track your favored enemies, as well as on Intelligence checks to recall information about them. When you gain this feature, you also learn one language of your choice that is spoken by your favored enemies, if they speak one at all. You choose one additional favored enemy, as well as an associated language, at 6th and 14th level. As you gain levels, your choices should reflect the types of monsters you have encountered on your adventures.",
+    "Favored Foe (Optional)": "This 1st-level feature replaces the Favored Enemy feature and works with the Foe Slayer feature. You gain no benefit from the replaced feature and don't qualify for anything in the game that requires it. When you hit a creature with an attack roll, you can call on your mystical bond with nature to mark the target as your favored enemy for 1 minute or until you lose your concentration (as if you were concentrating on a spell). The first time on each of your turns that you hit the favored enemy and deal damage to it, including when you mark it, you increase that damage by 1d4. You can use this feature to mark a favored enemy a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. This feature's extra damage increases when you reach certain levels in this class: to 1d6 at 6th level and to 1d8 at 14th level.",
+    "Natural Explorer": "Also at 1st level, you are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions. Choose one type of favored terrain: arctic, coast, desert, forest, grassland, mountain, swamp, or the Underdark. When you make an Intelligence or Wisdom check related to your favored terrain, your proficiency bonus is doubled if you are using a skill that you’re proficient in. While traveling for an hour or more in your favored terrain, you gain the following benefits: You choose additional favored terrain types at 6th and 10th level.",
+    "Deft Explorer (Optional)": "This 1st-level feature replaces the Natural Explorer feature. You gain no benefit from the replaced feature and don't qualify for anything in the game that requires it. You are an unsurpassed explorer and survivor, both in the wilderness and in dealing with others on your travels. You gain the Canny benefit below, and you gain an additional benefit when you reach 6th level and 10th level in this class. Choose one of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make using the chosen skill. You can also speak, read, and write 2 additional languages of your choice. Your walking speed increases by 5, and you gain a climbing speed and a swimming speed equal to your walking speed. As an action, you can give yourself a number of temporary hit points equal to 1d8 + your Wisdom modifier (minimum of 1 temporary hit point). You can use this action a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. In addition, whenever you finish a short rest, your exhaustion level, if any, is decreased by 1.",
+    "Fighting Style": "At 2nd level, you adopt a particular style of fighting as your specialty. Choose one of the following options. You can't take a Fighting Style option more than once, even if you later get to choose again.",
+    "Spellcasting": "By the time you reach 2nd level, you have learned to use the magical essence of nature to cast spells, much as a druid does. The Ranger table shows how many spell slots you have to cast your ranger spells of 1st level and higher. To cast one of these spells, you must expend a slot of the spell's level or higher. You regain all expended spell slots when you finish a long rest. For example, if you know the 1st-level spell Animal Friendship and have a 1st-level and a 2nd-level spell slot available, you can cast Animal Friendship using either slot. You know two 1st-level spells of your choice from the ranger spell list. The Spells Known column of the Ranger table shows when you learn more ranger spells of your choice. Each of these spells must be of a level for which you have spell slots. For instance, when you reach 5th level in this class, you can learn one new spell of 1st or 2nd level. Additionally, when you gain a level in this class, you can choose one of the ranger spells you know and replace it with another spell from the ranger spell list, which also must be of a level for which you have spell slots. Wisdom is your spellcasting ability for your ranger spells, since your magic draws on your attunement to nature. You use your Wisdom whenever a spell refers to your spellcasting ability. In addition, you use your Wisdom modifier when setting the saving throw DC for a ranger spell you cast and when making an attack roll with one. Spell save DC = 8 + your proficiency bonus + your Wisdom modifier Spell attack modifier = your proficiency bonus + your Wisdom modifier At 2nd level, you can use a druidic focus as a spellcasting focus for your ranger spells. A druidic focus might be a sprig of mistletoe or holly, a wand or rod made of yew or another special wood, a staff drawn whole from a living tree, or an object incorporating feathers, fur, bones, and teeth from sacred animals.",
+    "Primeval Awareness": "Beginning at 3rd level, you can use your action and expend one ranger spell slot to focus your awareness on the region around you. For 1 minute per level of the spell slot you expend, you can sense whether the following types of creatures are present within 1 mile of you (or within up to 6 miles if you are in your favored terrain): aberrations, celestials, dragons, elementals, fey, fiends, and undead. This feature doesn’t reveal the creatures’ location or number.",
+    "Primal Awareness (Optional)": "This 3rd-level feature replaces the Primeval Awareness feature. You gain no benefit from the replaced feature and don't qualify for anything in the game that requires it. You can focus your awareness through the interconnections of nature: you learn additional spells when you reach certain levels in this class if you don't already know them, as shown in the Primal Awareness Spells table. These spells don't count against the number of ranger spells you know. You can cast each of these spells once without expending a spell slot. Once you cast a spell in this way, you can't do so again until you finish a long rest.",
+    "Ranger Conclave": "At 3rd level, you choose to emulate the ideals and training of a ranger conclave. Your choice grants you features at 3rd level and again at 7th, 11th, and 15th level.",
+    "Ability Score Improvement": "When you reach 4th level, and again at 8th, 12th, 16th, and 19th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature.",
+    "Martial Versatility (Optional)": "Whenever you reach a level in this class that grants the Ability Score Improvement feature, you can replace a fighting style you know with another fighting style available to rangers. This replacement represents a shift of focus in your martial practice.",
+    "Extra Attack": "Beginning at 5th level, you can attack twice, instead of once, whenever you take the Attack action on your turn.",
+    "Land's Stride": "Starting at 8th level, moving through nonmagical difficult terrain costs you no extra movement. You can also pass through nonmagical plants without being slowed by them and without taking damage from them if they have thorns, spines, or a similar hazard. In addition, you have advantage on saving throws against plants that are magically created or manipulated to impede movement, such as those created by the Entangle spell.",
+    "Hide in Plain Sight": "Starting at 10th level, you can spend 1 minute creating camouflage for yourself. You must have access to fresh mud, dirt, plants, soot, and other naturally occurring materials with which to create your camouflage. Once you are camouflaged in this way, you can try to hide by pressing yourself up against a solid surface, such as a tree or wall, that is at least as tall and wide as you are. You gain a +10 bonus to Dexterity (Stealth) checks as long as you remain there without moving or taking actions. Once you move or take an action or a reaction, you must camouflage yourself again to gain this benefit.",
+    "Nature's Veil (Optional)": "This 10th-level feature replaces the Hide in Plain Sight feature. You gain no benefit from the replaced feature and don't qualify for anything in the game that requires it. You draw on the powers of nature to hide yourself from view briefly. As a bonus action, you can magically become invisible, along with any equipment you are wearing or carrying, until the start of your next turn. You can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest.",
+    "Vanish": "Starting at 14th level, you can use the Hide action as a bonus action on your turn. Also, you can't be tracked by nonmagical means, unless you choose to leave a trail.",
+    "Feral Senses": "At 18th level, you gain preternatural senses that help you fight creatures you can't see. When you attack a creature you can't see, your inability to see it doesn't impose disadvantage on your attack rolls against it. You are also aware of the location of any invisible creature within 30 feet of you, provided that the creature isn't hidden from you and you aren't blinded or deafened.",
+    "Foe Slayer": "At 20th level, you become an unparalleled hunter of your enemies. Once on each of your turns, you can add your Wisdom modifier to the attack roll or the damage roll of an attack you make against one of your favored enemies. You can choose to use this feature before or after the roll, but before any effects of the roll are applied."
+  },
+  "spells_known_by_level": {
+    "2": 2,
+    "3": 3,
+    "4": 3,
+    "5": 4,
+    "6": 4,
+    "7": 5,
+    "8": 5,
+    "9": 6,
+    "10": 6,
+    "11": 7,
+    "12": 7,
+    "13": 8,
+    "14": 8,
+    "15": 9,
+    "16": 9,
+    "17": 10,
+    "18": 10,
+    "19": 11,
+    "20": 11
+  },
+  "cantrips_known_by_level": {},
+  "spell_slots_by_level": {
+    "2": {
+      "1": 2
+    },
+    "3": {
+      "1": 3
+    },
+    "4": {
+      "1": 3
+    },
+    "5": {
+      "1": 4,
+      "2": 2
+    },
+    "6": {
+      "1": 4,
+      "2": 2
+    },
+    "7": {
+      "1": 4,
+      "2": 3
+    },
+    "8": {
+      "1": 4,
+      "2": 3
+    },
+    "9": {
+      "1": 4,
+      "2": 3,
+      "3": 2
+    },
+    "10": {
+      "1": 4,
+      "2": 3,
+      "3": 2
+    },
+    "11": {
+      "1": 4,
+      "2": 3,
+      "3": 3
+    },
+    "12": {
+      "1": 4,
+      "2": 3,
+      "3": 3
+    },
+    "13": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 1
+    },
+    "14": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 1
+    },
+    "15": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 2
+    },
+    "16": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 2
+    },
+    "17": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 3,
+      "5": 1
+    },
+    "18": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 3,
+      "5": 1
+    },
+    "19": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 3,
+      "5": 2
+    },
+    "20": {
+      "1": 4,
+      "2": 3,
+      "3": 3,
+      "4": 3,
+      "5": 2
+    }
+  },
+  "spellcasting_ability": "wis",
+  "feature_choices": {
+    "Fighting Style": {
+      "pick": 1,
+      "options": [
+        {
+          "name": "Archery",
+          "desc": "You gain a +2 bonus to attack rolls you make with ranged weapons."
+        },
+        {
+          "name": "Blind Fighting",
+          "desc": "You have blindsight with a range of 10 feet. Within that range, you can effectively see anything that isn't behind total cover, even if you're blinded or in darkness. Moreover, you can see an invisible creature within that range, unless the creature successfully hides from you."
+        },
+        {
+          "name": "Defense",
+          "desc": "While you are wearing armor, you gain a +1 bonus to AC."
+        },
+        {
+          "name": "Dueling",
+          "desc": "When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon."
+        },
+        {
+          "name": "Two-Weapon Fighting",
+          "desc": "When you engage in two-weapon fighting, you can add your ability modifier to the damage of the second attack."
+        }
+      ]
+    }
+  }
+}
