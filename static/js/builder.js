@@ -80,6 +80,7 @@ export async function initBuilder() {
     background: '', classSkills: [], subclass: '',
     cantrips: [], spells: [], classData: null, backgroundsData: null,
   };
+  window.state = state;
   try {
     [state.classData, state.backgroundsData] = await Promise.all([
       api.getClass('bard'), api.getBackgrounds(),
