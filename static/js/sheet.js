@@ -116,8 +116,6 @@ let itemData = null;
 let activeTab = 0;
 let editMode = false;
 let _expandedItems = {};
-let _pendingBaseItem = null;
-window._pendingBaseItemRef = { get: () => _pendingBaseItem, set: v => { _pendingBaseItem = v; } };
 
 function abilityMod(score) { return Math.floor((score - 10) / 2); }
 function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }
@@ -652,29 +650,10 @@ function renderInventory(el) {
   if (editMode) renderItemPickerResults();
 }
 
-function _findBaseWeapon(name) {
-  const n = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  return Object.keys(BASE_WEAPONS).find(k => k.replace(/[^a-z0-9]/g, '') === n) || null;
-}
-
 function renderItemPickerResults() {
   const q = (document.getElementById('ip-search')?.value || '').toLowerCase();
   const results = document.getElementById('ip-results');
   if (!results || !itemData) return;
-
-  if (_pendingBaseItem) {
-    const it = itemData[_pendingBaseItem];
-    const isWeapon = it.base_weapon_type;
-    const choices = isWeapon ? Object.entries(BASE_WEAPONS) : Object.entries(ARMORS).filter(a => a[0] !== 'none');
-    results.innerHTML = `
-      <div style="margin-bottom:6px;font-size:11px;color:#888">Select base for <b>${escHtml(it.name)}</b>:</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
-        ${choices.map(([key, val]) => `<div class="pill" style="font-size:10px;cursor:pointer" onclick="confirmBaseItem('${_pendingBaseItem}','${key}')">${escHtml(val.name)}</div>`).join('')}
-      </div>
-      <div style="font-size:10px;color:#888;cursor:pointer" onclick="window._pendingBaseItemRef.set(null);renderItemPickerResults()">← Back to library</div>
-    `;
-    return;
-  }
 
   const entries = Object.entries(itemData).filter(([, it]) =>
     !q || it.name.toLowerCase().includes(q)
@@ -683,14 +662,21 @@ function renderItemPickerResults() {
     const color = RARITY_COLORS[(it.rarity || '').toLowerCase()] || '#888';
     const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
     const has = (char.inventory || []).some(i => i.slug === slug);
-    const needsBase = it.base_weapon_type || it.base_armor_type;
-    const onClick = has ? '' : needsBase ? `window._pendingBaseItemRef.set('${slug}');renderItemPickerResults()` : `addLibraryItem('${slug}')`;
-    const tag = needsBase ? ' <span style="font-size:8px;color:#888">(select base)</span>' : '';
-    return `<div class="item-row" style="${has ? 'opacity:0.4' : 'cursor:pointer'}" onclick="${onClick}">
-      <div class="item-name">
-        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:6px;vertical-align:middle"></span>
-        ${escHtml(it.name)}${tag}
-        <span style="font-size:9px;color:#888;margin-left:4px">${escHtml(it.rarity || '')}</span>
+    const isWeapon = it.base_weapon_type;
+    const isArmor = it.base_armor_type;
+    const choices = isWeapon ? Object.entries(BASE_WEAPONS) : isArmor ? ARMORS.filter(a => a.key !== 'none').map(a => [a.key, a]) : null;
+    return `<div class="item-row" style="${has ? 'opacity:0.4' : ''}">
+      <div class="item-name" style="flex-wrap:wrap;gap:3px">
+        <span style="display:inline-flex;align-items:center;gap:4px">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0"></span>
+          ${escHtml(it.name)}
+          <span style="font-size:9px;color:#888">${escHtml(it.rarity || '')}</span>
+        </span>
+        ${choices && !has ? `
+        <select style="font-size:9px;padding:1px 4px;border:1px solid var(--gray-light);border-radius:3px;background:var(--card-bg);color:var(--text);cursor:pointer" onchange="confirmBaseItem('${slug}','${isWeapon ? 'w-' : 'a-'}'+this.value)">
+          <option value="">+ Select base...</option>
+          ${choices.map(([key, val]) => `<option value="${key}">${escHtml(val.name)}</option>`).join('')}
+        </select>` : has ? '<span style="font-size:9px;color:#888">(owned)</span>' : ''}
       </div>
       <div class="item-qty">${cost}</div>
     </div>`;
@@ -706,10 +692,11 @@ window.toggleItemPicker = () => {
 
 window.filterItemPicker = () => renderItemPickerResults();
 
-window.confirmBaseItem = (slug, baseKey) => {
+window.confirmBaseItem = (slug, prefixed) => {
   const it = itemData?.[slug];
   if (!it) return;
-  const isWeapon = it.base_weapon_type;
+  const isWeapon = prefixed.startsWith('w-');
+  const baseKey = prefixed.slice(2);
   const baseData = isWeapon ? BASE_WEAPONS[baseKey] : ARMORS.find(a => a.key === baseKey);
   if (!baseData) return;
   const displayName = `${baseData.name}, ${it.name.replace(/^[WeaponArmor]+,\s*/, '')}`;
@@ -717,19 +704,14 @@ window.confirmBaseItem = (slug, baseKey) => {
   if (isWeapon) entry.base_weapon = baseKey;
   else entry.base_armor = baseKey;
   const inventory = [...(char.inventory || []), entry];
-  _pendingBaseItem = null;
   save({ inventory }).then(() => renderActiveTab());
+  document.getElementById('ip-search').value = '';
   log('item', `Added library item: ${displayName} (base: ${baseKey})`);
 };
 
 window.addLibraryItem = (slug) => {
   const it = itemData?.[slug];
   if (!it) return;
-  if (it.base_weapon_type || it.base_armor_type) {
-    _pendingBaseItem = slug;
-    renderItemPickerResults();
-    return;
-  }
   const inventory = [...(char.inventory || []), { name: it.name, qty: 1, slug, cost_gp: it.cost_gp }];
   save({ inventory }).then(() => renderActiveTab());
   log('item', `Added library item: ${it.name}`);
