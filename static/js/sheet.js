@@ -303,13 +303,59 @@ function renderBgCard() {
     </div>`;
 }
 
+function _baseKeyFromName(name) {
+  const n = name.toLowerCase();
+  return Object.keys(BASE_WEAPONS).find(k => n.includes(BASE_WEAPONS[k].name.toLowerCase())) || null;
+}
+
+function _invWeaponEntries() {
+  return (char.inventory || []).filter(it => {
+    if (!it.equipped) return false;
+    const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
+    if (!lib || !lib.weapon_bonus) return false;
+    if (it.base_weapon) return true;
+    if (lib.base_weapon_type) return true;
+    if (_baseKeyFromName(it.name)) return true;
+    return false;
+  });
+}
+
 function renderCombat(el) {
   const scores = char.ability_scores;
   const pb = profBonus(char.level);
   const dexMod = abilityMod(scores.dex);
   const conMod = abilityMod(scores.con);
   const weapons = char.weapons || [];
+  const invWeapons = _invWeaponEntries();
   const subclassName = char.subclass_key && classData?.subclasses?.[char.subclass_key]?.name || '—';
+
+  function wRow(label, die, atkBonus, dmgBonus, typeLine, deletable) {
+    const dmg = `${die}${dmgBonus >= 0 ? '+' : ''}${dmgBonus}`;
+    return `<div class="weapon-row">
+      <div>
+        <div class="weapon-name">${label}</div>
+        <div style="font-size:10px;color:#888">${typeLine}</div>
+      </div>
+      <div class="weapon-atk">${atkBonus}</div>
+      <div class="weapon-dmg">${dmg}</div>
+      ${deletable ? `<button class="delete-btn" onclick="removeWeapon(${deletable})">×</button>` : ''}
+    </div>`;
+  }
+
+  function invWeaponRow(it) {
+    const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
+    const bonus = lib?.weapon_bonus || 0;
+    const baseKey = it.base_weapon || _baseKeyFromName(it.name);
+    const base = baseKey ? BASE_WEAPONS[baseKey] : null;
+    const die = base?.die || '1d6';
+    const isFinesse = base?.props?.includes('finesse');
+    const mod = isFinesse ? Math.max(abilityMod(scores.str || 10), abilityMod(scores.dex || 10)) : abilityMod(scores.str || 10);
+    const atk = fmtBonus(mod + pb + bonus);
+    const typeLine = `${base?.type || ''} · +${bonus} magic`;
+    const eqBadge = '<span style="font-size:9px;color:#4a4;margin-left:4px">● equipped</span>';
+    return wRow(`${escHtml(it.name)}${eqBadge}`, die, atk, mod, typeLine, false);
+  }
+
   el.innerHTML = `
     <div class="hp-editor">
       <button class="hp-editor-btn" onclick="adjustHp(-1)">−</button>
@@ -327,7 +373,12 @@ function renderCombat(el) {
       <div class="stat-box"><div class="stat-val">${char.hp_max}</div><div class="stat-label">Max HP</div></div>
       <div class="stat-box"><div class="stat-val">${fmtBonus(conMod)}</div><div class="stat-label">Con Mod</div></div>
     </div>
-    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+    ${invWeapons.length ? `
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
+      <span>Equipped Items</span>
+    </div>
+    ${invWeapons.map(invWeaponRow).join('')}` : ''}
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;${invWeapons.length ? 'margin-top:10px' : ''}">
       <span>Weapons</span>
       <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
     </div>
@@ -1008,6 +1059,7 @@ window.addWeapon = () => {
     qty = p.qty; die = p.die; type = bw.type;
   }
   const weapons = [...(char.weapons || []), { name, damage_die: `${qty}${die}`, type, ability, proficient, linkedInvName: invMatch ? invMatch.name : null }];
+  document.getElementById('w-name').value = '';
   save({ weapons }).then(() => renderActiveTab());
 };
 
