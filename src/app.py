@@ -39,7 +39,7 @@ def login_required(f):
 _JSON_FIELDS = {
     'ability_scores', 'skill_proficiencies', 'expertise',
     'spells_known', 'spell_slots', 'features', 'weapons',
-    'inventory', 'coins', 'notes', 'choices',
+    'inventory', 'coins', 'notes', 'choices', 'armor',
 }
 
 
@@ -104,6 +104,10 @@ def init_db():
             pass
     try:
         db.execute("ALTER TABLE characters ADD COLUMN choices TEXT NOT NULL DEFAULT '{}'")
+    except Exception:
+        pass
+    try:
+        db.execute("ALTER TABLE characters ADD COLUMN armor TEXT DEFAULT NULL")
     except Exception:
         pass
     db.commit()

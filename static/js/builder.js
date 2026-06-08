@@ -63,6 +63,7 @@ const RACES = [
     key:'half_elf', name:'Half-Elf', speed:30, size:'Medium',
     asi:{ cha:2 },
     flexAsi:{ count:2, points:1, exclude:['cha'] },
+    bonusSkills:{ count:2 },
     desc:'CHA +2, then +1 to two other ability scores of your choice. 2 bonus skill proficiencies.',
     traits:['Darkvision 60ft','Fey Ancestry','Skill Versatility (2 skills)','Extra Language'],
   },
@@ -105,6 +106,8 @@ const BG_SOURCES = {
   'Acq. Inc.': ['celebrity-adventurers-scion','failed-merchant','grinner','house-agent'],
 };
 
+const ALL_SKILLS = ['Acrobatics','Animal Handling','Arcana','Athletics','Deception','History','Insight','Intimidation','Investigation','Medicine','Nature','Perception','Performance','Persuasion','Religion','Sleight of Hand','Stealth','Survival'];
+
 const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
 const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
@@ -123,6 +126,7 @@ let state = {
   background: '',
   bgFilter: 'all',
   classSkills: [],
+  racialSkills: [],
   subclass: '',
   choices: {},
   flexAsiChoices: [],
@@ -289,7 +293,7 @@ export async function initBuilder() {
     step: 1, name: '', classKey: 'bard', level: 1, race: '',
     abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
     abilityMode: 'array',
-    background: '', bgFilter: 'all', classSkills: [], subclass: '', choices: {}, flexAsiChoices: [],
+    background: '', bgFilter: 'all', classSkills: [], racialSkills: [], subclass: '', choices: {}, flexAsiChoices: [],
     cantrips: [], spells: [], classData: null, backgroundsData: null, spellData: null, spellFilter: '',
   };
   window.state = state;
@@ -317,6 +321,15 @@ function renderNav(el) {
 }
 
 function renderStep() {
+  try {
+    _renderStep();
+  } catch(e) {
+    document.getElementById('app').innerHTML = `<div style="padding:24px;font-size:12px;color:#c44"><b>Render error (step ${state.step}):</b><br><pre style="white-space:pre-wrap;word-break:break-all">${e?.stack || e?.message || String(e)}</pre></div>`;
+    console.error('renderStep crash:', e);
+  }
+}
+
+function _renderStep() {
   const app = document.getElementById('app');
   const step = state.step;
   const labels = stepLabels();
@@ -472,19 +485,41 @@ function renderStep3(body) {
   const bgTools = selectedBg ? (selectedBg.tool_proficiencies || []) : [];
   const bgLangs = selectedBg ? selectedBg.languages : 0;
   const bgFeature = selectedBg ? selectedBg.feature : '';
-  const available = state.classData.skill_choices.filter(s => !bgSkills.includes(s));
+  const raceData = RACES.find(r => r.key === state.race);
+  const bonusSkills = raceData?.bonusSkills;
+  const takenSkills = [...bgSkills, ...state.racialSkills];
+  const available = state.classData.skill_choices.filter(s => !takenSkills.includes(s));
   const max = state.classData.skill_count;
   const clsName = className(state.classKey);
 
+  const classSkillPills = available.map(s => {
+    const sel = state.classSkills.includes(s);
+    const dis = !sel && state.classSkills.length >= max;
+    if (dis) return `<div class="pill disabled">${escHtml(s)}</div>`;
+    return `<div class="pill${sel ? ' selected' : ''}" onclick="toggleClassSkill('${s}')">${escHtml(s)}</div>`;
+  }).join('');
+
+  const racialSkillPills = bonusSkills ? (() => {
+    const alreadyTaken = [...bgSkills, ...state.classSkills];
+    return ALL_SKILLS.filter(s => !alreadyTaken.includes(s)).map(s => {
+      const sel = state.racialSkills.includes(s);
+      const dis = !sel && state.racialSkills.length >= bonusSkills.count;
+      if (dis) return `<div class="pill disabled" style="font-size:11px">${escHtml(s)}</div>`;
+      return `<div class="pill${sel ? ' selected' : ''}" style="font-size:11px" onclick="toggleRacialSkill('${s}')">${escHtml(s)}</div>`;
+    }).join('');
+  })() : '';
+
+  const bonusSkillNote = bonusSkills ? ` · ${raceData.name}: +${bonusSkills.count} from any list` : '';
+
   body.innerHTML = `
     <div class="step-title">Background & Skills</div>
-    <div class="step-sub">Background grants 2 skills automatically. Then choose ${max} ${clsName} skills.</div>
+    <div class="step-sub">Background grants 2 skills automatically. Then choose ${max} ${clsName} skills${bonusSkillNote}.</div>
     <div class="field-label">Source</div>
     <div class="pills" style="margin-bottom:8px">
-      ${allSources.map(s => `<div class="pill${filter===s?' selected':''}" style="font-size:11px" onclick="setBgFilter('${s}')">${s==='all'?'All':s}</div>`).join('')}
+      ${allSources.map(s => `<div class="pill${filter===s?' selected':''}" style="font-size:11px" onclick="setBgFilter('${s}')">${s==='all'?'All':escHtml(s)}</div>`).join('')}
     </div>
     <div class="field-label">Background <span style="font-weight:400;color:#888">(${filteredKeys.length})</span></div>
-    <div class="pills">${filteredKeys.map(k => `<div class="pill${state.background===k?' selected':''}" onclick="selectBackground('${k}')">${state.backgroundsData[k].name}</div>`).join('')}</div>
+    <div class="pills">${filteredKeys.map(k => `<div class="pill${state.background===k?' selected':''}" onclick="selectBackground('${k}')">${escHtml(state.backgroundsData[k].name)}</div>`).join('')}</div>
     ${selectedBg ? `
     <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
       <div style="font-weight:700;margin-bottom:4px">${escHtml(selectedBg.name)} <span style="font-weight:400;color:#888;font-size:10px">· ${bgSourceFor(state.background)}</span></div>
@@ -493,12 +528,12 @@ function renderStep3(body) {
       ${bgLangs ? `<div style="margin-bottom:3px"><span style="color:#888">Languages:</span> +${bgLangs} of choice</div>` : ''}
       ${bgFeature ? `<div style="margin-top:4px;font-size:11px;color:#888">Feature: <i>${escHtml(bgFeature)}</i></div>` : ''}
     </div>` : ''}
+    ${bonusSkills ? `
+    <div class="field-label" style="margin-top:12px">${escHtml(raceData.name)} bonus skills (choose ${bonusSkills.count})</div>
+    <div class="pills">${racialSkillPills}</div>
+    <div style="font-size:10px;color:#888;margin-top:2px;margin-bottom:4px">${state.racialSkills.length}/${bonusSkills.count} chosen</div>` : ''}
     <div class="field-label" style="margin-top:12px">${clsName} skills (choose ${max})</div>
-    <div class="pills">${available.map(s => {
-      const sel = state.classSkills.includes(s);
-      const disabled = !sel && state.classSkills.length >= max;
-      return `<div class="pill${sel?' selected':''}${disabled?' disabled':''}" onclick="${disabled?'':` toggleClassSkill('${s}')`}">${s}</div>`;
-    }).join('')}</div>
+    <div class="pills">${classSkillPills}</div>
   `;
 }
 
@@ -514,7 +549,7 @@ function renderChoicePickers(allChoices) {
     const pills = cfg.options.map(opt => {
       const sel = selected.includes(opt.name);
       const dis = !sel && selected.length >= limit;
-      return `<div class="pill${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" style="font-size:11px" onclick="toggleChoice(${JSON.stringify(featName)},${JSON.stringify(opt.name)},${limit})" title="${escHtml(opt.desc)}">${escHtml(opt.name)}</div>`;
+      return `<div class="pill${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" style="font-size:11px" onclick="toggleChoice(${escHtml(JSON.stringify(featName))},${escHtml(JSON.stringify(opt.name))},${limit})" title="${escHtml(opt.desc)}">${escHtml(opt.name)}</div>`;
     }).join('');
     const selDesc = selected.map(n => {
       const opt = cfg.options.find(o => o.name === n);
@@ -691,7 +726,7 @@ window.selectClass = async (k) => {
   renderStep();
 };
 window.selectLevel = (l) => { state.level = l; renderStep(); };
-window.selectRace = (k) => { state.race = k; state.flexAsiChoices = []; renderStep(); };
+window.selectRace = (k) => { state.race = k; state.flexAsiChoices = []; state.racialSkills = []; renderStep(); };
 window.toggleFlexAsi = (ab) => {
   const flex = RACES.find(r => r.key === state.race)?.flexAsi;
   if (!flex) return;
@@ -711,6 +746,13 @@ window.toggleClassSkill = (s) => {
   const i = state.classSkills.indexOf(s);
   if (i >= 0) state.classSkills.splice(i, 1);
   else if (state.classSkills.length < state.classData.skill_count) state.classSkills.push(s);
+  renderStep();
+};
+window.toggleRacialSkill = (s) => {
+  const max = RACES.find(r => r.key === state.race)?.bonusSkills?.count || 0;
+  const i = state.racialSkills.indexOf(s);
+  if (i >= 0) state.racialSkills.splice(i, 1);
+  else if (state.racialSkills.length < max) state.racialSkills.push(s);
   renderStep();
 };
 window.selectSubclass = (k) => { state.subclass = k; renderStep(); };
@@ -771,7 +813,7 @@ window.finishBuilder = async () => {
   }
 
   const bgSkills = state.background ? (state.backgroundsData[state.background]?.skill_proficiencies || []) : [];
-  const skillProf = [...new Set([...bgSkills, ...state.classSkills])];
+  const skillProf = [...new Set([...bgSkills, ...state.racialSkills, ...state.classSkills])];
 
   const payload = {
     name: state.name,
@@ -830,6 +872,10 @@ function validateStep() {
   }
   if (s === 3) {
     if (!state.background) { alert('Choose a background.'); return false; }
+    const raceBonus = RACES.find(r => r.key === state.race)?.bonusSkills;
+    if (raceBonus && state.racialSkills.length < raceBonus.count) {
+      alert(`Choose ${raceBonus.count} bonus skills for ${RACES.find(r => r.key === state.race).name}.`); return false;
+    }
   }
   return true;
 }

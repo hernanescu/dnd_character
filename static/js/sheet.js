@@ -22,6 +22,31 @@ const SKILLS = [
 ];
 
 const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
+
+const ARMORS = [
+  { key: 'none',        name: 'Unarmored',      type: 'none',   base: 10, dex: true,  maxDex: null },
+  { key: 'leather',     name: 'Leather',         type: 'light',  base: 11, dex: true,  maxDex: null },
+  { key: 'studded',     name: 'Studded Leather', type: 'light',  base: 12, dex: true,  maxDex: null },
+  { key: 'chain_shirt', name: 'Chain Shirt',     type: 'medium', base: 13, dex: true,  maxDex: 2 },
+  { key: 'scale_mail',  name: 'Scale Mail',      type: 'medium', base: 14, dex: true,  maxDex: 2 },
+  { key: 'breastplate', name: 'Breastplate',     type: 'medium', base: 14, dex: true,  maxDex: 2 },
+  { key: 'half_plate',  name: 'Half Plate',      type: 'medium', base: 15, dex: true,  maxDex: 2 },
+  { key: 'chain_mail',  name: 'Chain Mail',      type: 'heavy',  base: 16, dex: false, maxDex: 0 },
+  { key: 'splint',      name: 'Splint',          type: 'heavy',  base: 17, dex: false, maxDex: 0 },
+  { key: 'plate',       name: 'Plate',           type: 'heavy',  base: 18, dex: false, maxDex: 0 },
+];
+
+function computeAC() {
+  const equipped = char.armor || { key: 'none', shield: false };
+  const armorDef = ARMORS.find(a => a.key === equipped.key) || ARMORS[0];
+  const dexMod = abilityMod(char.ability_scores?.dex || 10);
+  let ac = armorDef.base;
+  if (armorDef.dex) {
+    ac += armorDef.maxDex !== null ? Math.min(dexMod, armorDef.maxDex) : dexMod;
+  }
+  if (equipped.shield) ac += 2;
+  return ac;
+}
 const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
 const SPELLCASTING_ABILITY = { artificer: 'int', bard: 'cha', cleric: 'wis', druid: 'wis', paladin: 'cha', ranger: 'wis', sorcerer: 'cha', warlock: 'cha', wizard: 'int' };
 function getTabs() {
@@ -199,7 +224,7 @@ function renderCombat(el) {
       <button class="hp-editor-btn" onclick="adjustHp(+1)">+</button>
     </div>
     <div class="combat-grid">
-      <div class="stat-box"><div class="stat-val">${char.ac}</div><div class="stat-label">AC</div></div>
+      <div class="stat-box"><div class="stat-val">${computeAC()}</div><div class="stat-label">AC</div></div>
       <div class="stat-box"><div class="stat-val">${fmtBonus(dexMod)}</div><div class="stat-label">Initiative</div></div>
       <div class="stat-box"><div class="stat-val">30 ft</div><div class="stat-label">Speed</div></div>
       <div class="stat-box"><div class="stat-val">${fmtBonus(pb)}</div><div class="stat-label">Prof Bonus</div></div>
@@ -355,7 +380,22 @@ function spellCard(s) {
 function renderInventory(el) {
   const coins = char.coins || { pp:0, gp:0, ep:0, sp:0, cp:0 };
   const inventory = char.inventory || [];
+  const equipped = char.armor || { key: 'none', shield: false };
+  const equippedDef = ARMORS.find(a => a.key === equipped.key) || ARMORS[0];
   el.innerHTML = `
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Armor</span>
+      <span style="font-size:11px;color:#888">AC ${computeAC()}</span>
+    </div>
+    <div style="margin-bottom:6px">
+      <div class="pills" style="flex-wrap:wrap;gap:4px">
+        ${ARMORS.map(a => `<div class="pill${equipped.key === a.key ? ' selected' : ''}" style="font-size:10px" onclick="equipArmor('${a.key}')">${escHtml(a.name)}</div>`).join('')}
+      </div>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
+        <div class="pill${equipped.shield ? ' selected' : ''}" style="font-size:10px" onclick="toggleShield()">Shield +2</div>
+        <span style="font-size:10px;color:#888">${equippedDef.type === 'none' ? '10 + DEX' : equippedDef.type === 'light' ? `${equippedDef.base} + DEX` : equippedDef.type === 'medium' ? `${equippedDef.base} + DEX (max 2)` : `${equippedDef.base} (no DEX)`}${equipped.shield ? ' + 2 (shield)' : ''}</span>
+      </div>
+    </div>
     <div class="section-title">Coins</div>
     <div class="coin-grid">
       ${['pp','gp','ep','sp','cp'].map(c => `
@@ -413,7 +453,7 @@ function renderChoiceSection(allChoices) {
       html += cfg.options.map(opt => {
         const sel = selected.includes(opt.name);
         const dis = !sel && selected.length >= limit;
-        return `<div class="pill${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" style="font-size:10px" onclick="toggleSheetChoice(${JSON.stringify(featName)},${JSON.stringify(opt.name)},${limit})" title="${escHtml(opt.desc)}">${escHtml(opt.name)}</div>`;
+        return `<div class="pill${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" style="font-size:10px" onclick="toggleSheetChoice(${escHtml(JSON.stringify(featName))},${escHtml(JSON.stringify(opt.name))},${limit})" title="${escHtml(opt.desc)}">${escHtml(opt.name)}</div>`;
       }).join('');
       html += `</div>`;
     }
@@ -640,6 +680,16 @@ window.removeWeapon = (i) => {
   weapons.splice(i, 1);
   save({ weapons }).then(() => renderActiveTab());
   log('weapon', `Removed weapon: ${name}`);
+};
+
+window.equipArmor = (key) => {
+  const armor = { ...(char.armor || { shield: false }), key };
+  save({ armor }).then(() => renderActiveTab());
+};
+
+window.toggleShield = () => {
+  const armor = { key: 'none', ...(char.armor || {}), shield: !(char.armor?.shield) };
+  save({ armor }).then(() => renderActiveTab());
 };
 
 window.addItem = () => {

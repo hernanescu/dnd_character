@@ -1,0 +1,18 @@
+[Unit]
+Description=D&D Character Sheet
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=nvidia
+WorkingDirectory=/home/nvidia/dnd_character
+ExecStart=/home/nvidia/miniforge3/envs/dnd_env/bin/python src/app.py
+Environment=PORT=1404
+Environment=FLASK_DEBUG=0
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

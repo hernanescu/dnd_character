@@ -56,6 +56,7 @@ def parse_class_page(class_name):
         'subclasses': {},
         'spells': {},
         'features_by_level': {},
+        'feature_descriptions': {},
         'spells_known_by_level': {},
         'cantrips_known_by_level': {},
         'spell_slots_by_level': {},
@@ -83,16 +84,29 @@ def parse_class_page(class_name):
         n = m.group(1).lower()
         cls['skill_count'] = word_map.get(n, int(n) if n.isdigit() else 3)
 
+    # Spellcasting ability
+    m = re.search(r'Spellcasting Ability\s*\n\s*(\w+)', text, re.IGNORECASE)
+    if m:
+        ability = m.group(1).capitalize()
+        if ability in ABILITY_MAP:
+            cls['spellcasting_ability'] = ABILITY_MAP[ability]
+
     # Parse class table
     if content:
         _parse_class_table(content, cls)
+        _parse_feature_descriptions(content, cls)
 
-    # Collect subclass links (exclude UA)
+    # Collect subclass links (exclude UA) — handle both relative and absolute URLs
     subclass_links = set()
+    pat_rel = re.compile(rf'^/{class_name}:([a-z][a-z0-9-]+)$')
+    pat_abs = re.compile(rf'^https?://dnd5e\.wikidot\.com/{class_name}:([a-z][a-z0-9-]+)$')
     for a in (soup.find_all('a') if soup else []):
         href = a.get('href', '')
-        if re.match(rf'^/{class_name}:[a-z]', href) and '-ua' not in href:
-            subclass_links.add(href)
+        if '-ua' in href:
+            continue
+        m = pat_rel.match(href) or pat_abs.match(href)
+        if m:
+            subclass_links.add(f'/{class_name}:{m.group(1)}')
 
     return cls, subclass_links
 
@@ -186,6 +200,56 @@ def _parse_class_table(content, cls):
     cls['cantrips_known_by_level'] = compact
 
 
+def _parse_feature_descriptions(content, cls):
+    for h in content.find_all(['h3', 'h4']):
+        name = h.get_text().strip()
+        if not name or len(name) > 50:
+            continue
+        desc_parts = []
+        n = h.find_next_sibling()
+        while n and n.name not in ('h3', 'h4', 'h2', 'h1'):
+            if n.name == 'p':
+                t = n.get_text().strip()
+                if t and not t.startswith('Source:'):
+                    desc_parts.append(t)
+            n = n.find_next_sibling()
+        desc = ' '.join(desc_parts).strip()[:2000]
+        if desc:
+            cls['feature_descriptions'][name] = desc
+
+
+_CAP_WORD = r'[A-Z][a-z\']+'
+_OPT_THE = r'(?:[Tt]he\s+)?'
+_NAME_TAIL = rf'(?:\s+{_CAP_WORD}){{0,4}}'
+_SUBCLASS_NAME_PATTERNS = [
+    rf'(College of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'(Path of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'(Circle of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'(Oath of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'(Way of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'(School of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'(Order of {_OPT_THE}{_CAP_WORD}{_NAME_TAIL})',
+    rf'({_CAP_WORD}{_NAME_TAIL}\s+Domain)',
+    rf'({_CAP_WORD}{_NAME_TAIL}\s+Bloodline)',
+    rf'(The {_CAP_WORD}{_NAME_TAIL})',
+]
+
+
+def _subclass_display_name(key, soup):
+    """Try page title element first, then text patterns, then title-case the key."""
+    title_el = soup.find(id='page-title') or soup.find(class_='page-title')
+    if title_el:
+        t = title_el.get_text().strip()
+        if t:
+            return t
+    text = soup.get_text()[:3000]
+    for pat in _SUBCLASS_NAME_PATTERNS:
+        m = re.search(pat, text)
+        if m:
+            return m.group(1).strip()
+    return key.replace('-', ' ').title()
+
+
 def parse_subclass(class_name, href):
     print(f"    Fetching subclass {href}...")
     r = get(f'{BASE_URL}{href}')
@@ -193,21 +257,13 @@ def parse_subclass(class_name, href):
     content = soup.select_one('#page-content')
 
     key = href.split(':')[1]
-
-    # Derive display name from key or first paragraph
-    name = f"College of {key.capitalize()}"
-    if content:
-        first_p = content.find('p')
-        if first_p:
-            text = first_p.get_text()
-            m = re.search(r'College of (\w+(?: of \w+)*)', text)
-            if m:
-                name = f"College of {m.group(1)}"
+    name = _subclass_display_name(key, soup)
 
     sub = {
         'name': name,
         'description': '',
         'features_by_level': {},
+        'feature_descriptions': {},
     }
 
     if not content:
@@ -217,28 +273,35 @@ def parse_subclass(class_name, href):
     for p in content.find_all('p'):
         t = p.get_text().strip()
         if t and not t.startswith('Source:'):
-            sub['description'] = t
+            sub['description'] = t[:500]
             break
 
-    # Map each heading to a level by reading the paragraph that follows it
-    headings = content.find_all(['h3', 'h4', 'h2'])
-    for heading in headings:
+    # Walk headings: collect level mapping AND description for each feature
+    for heading in content.find_all(['h2', 'h3', 'h4']):
         feat_name = heading.get_text().strip()
-        if not feat_name:
+        if not feat_name or len(feat_name) > 60:
             continue
 
-        # Collect following paragraphs until next heading
         following_text = ''
+        desc_parts = []
         for sib in heading.next_siblings:
             if hasattr(sib, 'name') and sib.name in ['h2', 'h3', 'h4']:
                 break
             if hasattr(sib, 'get_text'):
-                following_text += ' ' + sib.get_text()
+                t = sib.get_text()
+                following_text += ' ' + t
+                if hasattr(sib, 'name') and sib.name == 'p':
+                    clean = t.strip()
+                    if clean and not clean.startswith('Source:'):
+                        desc_parts.append(clean)
 
-        # Extract level from following text
         level = _extract_level(following_text, feat_name)
         if level:
             sub['features_by_level'].setdefault(level, []).append(feat_name)
+
+        desc = ' '.join(desc_parts).strip()[:2000]
+        if desc:
+            sub['feature_descriptions'][feat_name] = desc
 
     return key, sub
 
@@ -261,8 +324,8 @@ def _extract_level(text, feat_name=''):
 
 
 def parse_spell_list(class_name):
-    print(f"  Fetching /{class_name}-core spell list...")
-    r = get(f'{BASE_URL}/spells:{class_name}-core')
+    print(f"  Fetching /{class_name} spell list...")
+    r = get(f'{BASE_URL}/spells:{class_name}')
     soup = BeautifulSoup(r.text, 'html.parser')
     content = soup.select_one('#page-content')
     slugs = []
@@ -281,54 +344,96 @@ def parse_spell(slug):
     content = soup.select_one('#page-content')
 
     name = slug.replace('-', ' ').title()
-    # Fix common title casing
     for pat, rep in [("Of ", "of "), ("The ", "the "), ("'S ", "'s ")]:
         name = name.replace(pat, rep)
     name = name[0].upper() + name[1:]
 
-    level = 0
-    school = ''
-    description = ''
+    spell = {
+        'name': name,
+        'level': 0,
+        'school': '',
+        'ritual': False,
+        'concentration': False,
+        'casting_time': '',
+        'range': '',
+        'components': '',
+        'material': '',
+        'duration': '',
+        'description': '',
+        'higher_levels': '',
+    }
 
     if content:
         paras = content.find_all('p')
-        # p0 = source, p1 = "Xth-level school" or "School cantrip", p2 = stat block, p3+ = desc
+
+        # Level/school/ritual — find the para that has level info
         level_para = None
+        stat_para = None
         desc_start = 3
-        for i, p in enumerate(paras[:5]):
+        for i, p in enumerate(paras[:6]):
             t = p.get_text().strip()
-            if re.search(r'cantrip|level \w+|th-level|st-level|nd-level|rd-level', t, re.IGNORECASE) \
+            if re.search(r'(?:th|st|nd|rd).level|cantrip', t, re.IGNORECASE) \
                and not t.startswith('Source') and not t.startswith('Casting'):
                 level_para = t
-                desc_start = i + 2  # skip stat block
+                stat_idx = i + 1
+                desc_start = stat_idx + 1
                 break
 
         if level_para:
             m_cantrip = re.search(r'(\w+)\s+cantrip', level_para, re.IGNORECASE)
             m_level = re.search(r'(\d+)(?:st|nd|rd|th).level\s+(\w+)', level_para, re.IGNORECASE)
             if m_cantrip:
-                level = 0
-                school = m_cantrip.group(1).capitalize()
+                spell['level'] = 0
+                spell['school'] = m_cantrip.group(1).capitalize()
             elif m_level:
-                level = int(m_level.group(1))
-                school = m_level.group(2).capitalize()
+                spell['level'] = int(m_level.group(1))
+                spell['school'] = m_level.group(2).capitalize()
+            spell['ritual'] = '(ritual)' in level_para.lower()
 
-        # Description paragraphs
+        # Stat block (casting_time, range, components, duration)
+        if stat_idx < len(paras):
+            stat_text = paras[stat_idx].get_text()
+            for line in stat_text.split('\n'):
+                line = line.strip()
+                if line.lower().startswith('casting time:'):
+                    spell['casting_time'] = line[len('Casting Time:'):].strip()
+                elif line.lower().startswith('range:'):
+                    spell['range'] = line[len('Range:'):].strip()
+                elif line.lower().startswith('components:'):
+                    comp = line[len('Components:'):].strip()
+                    # Extract material component (text in parentheses)
+                    m = re.search(r'\((.+?)\)', comp)
+                    if m:
+                        spell['material'] = m.group(1)
+                        comp = comp[:m.start()].strip().rstrip(',')
+                    spell['components'] = comp
+                elif line.lower().startswith('duration:'):
+                    dur = line[len('Duration:'):].strip()
+                    spell['duration'] = dur
+                    spell['concentration'] = 'concentration' in dur.lower()
+
+        # Description
         desc_parts = []
+        higher_parts = []
+        in_higher = False
         for p in paras[desc_start:]:
             t = p.get_text().strip()
-            if re.match(r'At Higher Levels', t, re.IGNORECASE):
-                break
-            if re.match(r'Spell Lists?|Source:', t, re.IGNORECASE):
+            if not t or t.startswith('Spell Lists') or t.startswith('Source:'):
                 continue
-            if t:
+            if re.match(r'At Higher Levels', t, re.IGNORECASE):
+                in_higher = True
+                higher_parts.append(t)
+                continue
+            if in_higher:
+                higher_parts.append(t)
+            else:
                 desc_parts.append(t)
-            if len(desc_parts) >= 2:
-                break
 
-        description = ' '.join(desc_parts).strip()[:500]
+        spell['description'] = ' '.join(desc_parts).strip()
+        if higher_parts:
+            spell['higher_levels'] = ' '.join(higher_parts).strip()
 
-    return {'name': name, 'level': level, 'school': school, 'description': description}
+    return spell
 
 
 def scrape(class_name='bard', output_path=None):
@@ -346,18 +451,49 @@ def scrape(class_name='bard', output_path=None):
         except Exception as e:
             print(f"    ✗ {href}: {e}")
 
-    # Spells
-    slugs = parse_spell_list(class_name)
-    print(f"  {len(slugs)} spells to fetch")
+    # Spells — load existing central spells, update with new ones
+    spells_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        'data', 'spells.json'
+    )
+    all_spells = {}
+    if os.path.isfile(spells_path):
+        with open(spells_path) as f:
+            all_spells = json.load(f)
+
+    slugs = []
+    try:
+        slugs = parse_spell_list(class_name)
+        print(f"  {len(slugs)} spells to fetch")
+    except Exception as e:
+        print(f"  No spell list found ({e})")
 
     for i, slug in enumerate(slugs):
         try:
+            # Skip re-fetch if already enriched (has components field)
+            if slug in all_spells and 'components' in all_spells[slug]:
+                if class_name not in all_spells[slug]['classes']:
+                    all_spells[slug]['classes'].append(class_name)
+                continue
+
             spell = parse_spell(slug)
-            cls['spells'][slug] = spell
+            if slug not in all_spells:
+                all_spells[slug] = spell
+                all_spells[slug]['classes'] = []
+            else:
+                all_spells[slug].update({k: v for k, v in spell.items() if k != 'classes'})
+            if class_name not in all_spells[slug]['classes']:
+                all_spells[slug]['classes'].append(class_name)
             if (i + 1) % 20 == 0:
                 print(f"    {i+1}/{len(slugs)} spells done...")
         except Exception as e:
             print(f"    ✗ {slug}: {e}")
+
+    cls['spells'] = slugs
+
+    # Write spells.json
+    with open(spells_path, 'w') as f:
+        json.dump(all_spells, f, indent=2, ensure_ascii=False)
 
     if output_path is None:
         output_path = os.path.join(
@@ -369,10 +505,11 @@ def scrape(class_name='bard', output_path=None):
     with open(output_path, 'w') as f:
         json.dump(cls, f, indent=2, ensure_ascii=False)
 
-    print(f"\n✓ Done: {len(cls['spells'])} spells, {len(cls['subclasses'])} subclasses")
+    print(f"\n✓ Done: {len(cls['spells'])} spell slugs, {len(cls['subclasses'])} subclasses")
     print(f"  features_by_level: {len(cls['features_by_level'])} levels")
     print(f"  spell_slots_by_level: {len(cls['spell_slots_by_level'])} levels")
     print(f"  Saved to: {output_path}")
+    print(f"  Central spells: {len(all_spells)} unique spells")
     return cls
 
 
