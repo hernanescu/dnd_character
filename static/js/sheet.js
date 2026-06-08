@@ -735,19 +735,22 @@ function renderItemPickerResults() {
     const has = (char.inventory || []).some(i => i.slug === slug);
     const isWeapon = it.base_weapon_type;
     const isArmor = it.base_armor_type;
-    const choices = isWeapon ? Object.entries(BASE_WEAPONS) : isArmor ? ARMORS.filter(a => a.key !== 'none').map(a => [a.key, a]) : null;
-    return `<div class="item-row" style="${has ? 'opacity:0.4' : ''}">
+    const needsBase = isWeapon || isArmor;
+    const choices = needsBase ? (isWeapon ? Object.entries(BASE_WEAPONS) : ARMORS.filter(a => a.key !== 'none').map(a => [a.key, a])) : null;
+    const rowId = `ip-row-${slug}`;
+    return `<div class="item-row" style="${has ? 'opacity:0.4' : 'cursor:pointer'}" ${has ? '' : `onclick="addLibraryItem('${slug}', parseInt(document.getElementById('ip-qty-${slug}')?.value || '1'))"`}>
       <div class="item-name" style="flex-wrap:wrap;gap:3px">
         <span style="display:inline-flex;align-items:center;gap:4px">
           <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0"></span>
           ${escHtml(it.name)}
           <span style="font-size:9px;color:#888">${escHtml(it.rarity || '')}</span>
         </span>
-        ${choices && !has ? `
-        <select style="font-size:9px;padding:1px 4px;border:1px solid var(--gray-light);border-radius:3px;background:var(--card-bg);color:var(--text);cursor:pointer" onchange="confirmBaseItem('${slug}','${isWeapon ? 'w-' : 'a-'}'+this.value)">
+        ${!has ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;color:#888">× <input id="ip-qty-${slug}" type="number" min="1" value="1" style="width:28px;padding:1px 2px;font-size:9px;border:1px solid var(--gray-light);border-radius:3px;background:var(--card-bg);color:var(--text);text-align:center" onclick="event.stopPropagation()"></span>` : '<span style="font-size:9px;color:#888">(owned)</span>'}
+        ${needsBase && !has ? `
+        <select style="font-size:9px;padding:1px 4px;border:1px solid var(--gray-light);border-radius:3px;background:var(--card-bg);color:var(--text);cursor:pointer" onclick="event.stopPropagation()" onchange="confirmBaseItem('${slug}','${isWeapon ? 'w-' : 'a-'}'+this.value, parseInt(document.getElementById('ip-qty-${slug}')?.value || '1'))">
           <option value="">+ Select base...</option>
           ${choices.map(([key, val]) => `<option value="${key}">${escHtml(val.name)}</option>`).join('')}
-        </select>` : has ? '<span style="font-size:9px;color:#888">(owned)</span>' : ''}
+        </select>` : ''}
       </div>
       <div class="item-qty">${cost}</div>
     </div>`;
@@ -763,7 +766,7 @@ window.toggleItemPicker = () => {
 
 window.filterItemPicker = () => renderItemPickerResults();
 
-window.confirmBaseItem = (slug, prefixed) => {
+window.confirmBaseItem = (slug, prefixed, qty) => {
   const it = itemData?.[slug];
   if (!it) return;
   const isWeapon = prefixed.startsWith('w-');
@@ -771,21 +774,21 @@ window.confirmBaseItem = (slug, prefixed) => {
   const baseData = isWeapon ? BASE_WEAPONS[baseKey] : ARMORS.find(a => a.key === baseKey);
   if (!baseData) return;
   const displayName = `${baseData.name}, ${it.name.replace(/^[WeaponArmor]+,\s*/, '')}`;
-  const entry = { name: displayName, qty: 1, slug, cost_gp: it.cost_gp };
+  const entry = { name: displayName, qty: qty || 1, slug, cost_gp: it.cost_gp };
   if (isWeapon) entry.base_weapon = baseKey;
   else entry.base_armor = baseKey;
   const inventory = [...(char.inventory || []), entry];
   save({ inventory }).then(() => renderActiveTab());
   document.getElementById('ip-search').value = '';
-  log('item', `Added library item: ${displayName} (base: ${baseKey})`);
+  log('item', `Added library item: ${displayName} x${qty||1} (base: ${baseKey})`);
 };
 
-window.addLibraryItem = (slug) => {
+window.addLibraryItem = (slug, qty) => {
   const it = itemData?.[slug];
   if (!it) return;
-  const inventory = [...(char.inventory || []), { name: it.name, qty: 1, slug, cost_gp: it.cost_gp }];
+  const inventory = [...(char.inventory || []), { name: it.name, qty: qty || 1, slug, cost_gp: it.cost_gp }];
   save({ inventory }).then(() => renderActiveTab());
-  log('item', `Added library item: ${it.name}`);
+  log('item', `Added library item: ${it.name} x${qty||1}`);
 };
 
 function choicePickLimit(cfg, level) {
