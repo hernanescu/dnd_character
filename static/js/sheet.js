@@ -89,15 +89,30 @@ function attunementSlotCount() {
   }).length;
 }
 
+function _invArmorEntry() {
+  return (char.inventory || []).find(it => it.equipped && it.base_armor);
+}
+
+function _invShieldEntry() {
+  return (char.inventory || []).find(it => {
+    if (!it.equipped) return false;
+    const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
+    return lib && lib.name.toLowerCase().startsWith('shield, +');
+  });
+}
+
 function computeAC() {
-  const equipped = char.armor || { key: 'none', shield: false };
-  const armorDef = ARMORS.find(a => a.key === equipped.key) || ARMORS[0];
+  const invArmor = _invArmorEntry();
+  const manualArmor = char.armor || { key: 'none', shield: false };
+  const armorKey = invArmor ? invArmor.base_armor : manualArmor.key;
+  const armorDef = ARMORS.find(a => a.key === armorKey) || ARMORS[0];
   const dexMod = abilityMod(char.ability_scores?.dex || 10);
   let ac = armorDef.base;
   if (armorDef.dex) {
     ac += armorDef.maxDex !== null ? Math.min(dexMod, armorDef.maxDex) : dexMod;
   }
-  if (equipped.shield) ac += 2;
+  const hasShield = !!_invShieldEntry() || manualArmor.shield;
+  if (hasShield) ac += 2;
   ac += getEquippedBonuses().ac;
   return ac;
 }
@@ -552,15 +567,18 @@ const RARITY_COLORS = { common: '#888', uncommon: '#2d7d46', rare: '#2a5a9e', 'v
 let _itemPickerFilter = '';
 
 function _acBreakdown() {
-  const a = char.armor || { key: 'none', shield: false };
-  const d = ARMORS.find(x => x.key === a.key) || ARMORS[0];
+  const invArmor = _invArmorEntry();
+  const manual = char.armor || { key: 'none', shield: false };
+  const key = invArmor ? invArmor.base_armor : manual.key;
+  const d = ARMORS.find(x => x.key === key) || ARMORS[0];
   const dex = abilityMod(char.ability_scores?.dex || 10);
   const parts = [];
   if (d.type === 'none') parts.push(`10 + DEX(${dex})`);
   else if (d.type === 'light') parts.push(`${d.base} + DEX(${dex})`);
   else if (d.type === 'medium') parts.push(`${d.base} + DEX(min ${dex},${d.maxDex})`);
   else parts.push(`${d.base} (no DEX)`);
-  if (a.shield) parts.push('Shield +2');
+  const hasShield = !!_invShieldEntry() || manual.shield;
+  if (hasShield) parts.push('Shield +2');
   const eq = getEquippedBonuses();
   if (eq.ac) parts.push(`Items +${eq.ac}`);
   return parts.join(' + ');
@@ -598,11 +616,13 @@ function renderInventory(el) {
       <div>
         <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Armor Class</div>
         <div style="font-size:22px;font-weight:700">${computeAC()}</div>
+        ${_invArmorEntry() ? `<div style="font-size:9px;color:#4a4">from ${escHtml(_invArmorEntry().name)}</div>` : ''}
+        ${_invShieldEntry() ? `<div style="font-size:9px;color:#4a4">+ ${escHtml(_invShieldEntry().name)}</div>` : ''}
       </div>
       <div style="text-align:right;font-size:9px;color:#888;line-height:1.5">
         ${_acBreakdown().split(' + ').map(p => `<div>${p}</div>`).join('')}
       </div>
-      ${editMode ? `<div style="margin-left:8px;display:flex;flex-direction:column;gap:2px">
+      ${editMode && !_invArmorEntry() ? `<div style="margin-left:8px;display:flex;flex-direction:column;gap:2px">
         <select class="input-field input-sm" style="font-size:9px;padding:2px 4px;width:80px" onchange="equipArmor(this.value)">
           ${ARMORS.map(a => `<option value="${a.key}" ${baseArmor.key === a.key ? 'selected' : ''}>${escHtml(a.name)}</option>`).join('')}
         </select>
