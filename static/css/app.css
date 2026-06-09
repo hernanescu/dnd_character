@@ -42,12 +42,12 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:            #f8f6f1;
-  --surface:       #ffffff;
-  --surface2:      #f0ece4;
-  --border:        #d8d0c4;
-  --border-subtle: #e8e0d4;
-  --text:          #1c1a17;
+  --bg:            #e5dfd3;
+  --surface:       #f8f6f1;
+  --surface2:      #ece7dd;
+  --border:        #b8b0a4;
+  --border-subtle: #d0c8bc;
+  --text:          #2c2218;
   --text-dim:      #8a8078;
   --text-faint:    #a09890;
   --font-display:  'AlegreyaSC', Georgia, serif;
