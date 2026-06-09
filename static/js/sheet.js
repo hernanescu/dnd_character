@@ -172,6 +172,9 @@ window.toggleTheme = () => {
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('dnd-theme', next);
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.textContent = next === 'dark' ? '☾' : '☀';
+  });
 };
 
 function skillBonus(skillKey, skillAbility) {
@@ -236,7 +239,7 @@ function render() {
               <span class="stat-pill-val" style="${hpPct <= 0.3 ? 'color:#ff6b6b' : ''}">${char.hp_current}</span>
               / ${char.hp_max} HP
             </div>
-            <button class="icon-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">🌓</button>
+            <button class="theme-toggle-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">${document.documentElement.getAttribute('data-theme')==='dark'?'☾':'☀'}</button>
             <button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();deleteCurrentChar(${char.id},'${escHtml(char.name)}')" title="Delete character">✕</button>
           </div>
         </div>

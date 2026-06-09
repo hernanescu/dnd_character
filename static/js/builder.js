@@ -167,7 +167,7 @@ export async function renderSpellLibrary() {
         <button class="back-btn" style="padding:0 0 6px;color:#888" onclick="window.location='/'">‹ Characters</button>
         <div class="char-name" style="font-size:18px">Spell Library</div>
       </div>
-      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">${document.documentElement.getAttribute('data-theme')==='dark'?'☾':'☀'}</button>
     </div>
     <div style="padding:10px 12px 0">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
@@ -243,7 +243,7 @@ export async function renderItemLibrary() {
         <button class="back-btn" style="padding:0 0 6px;color:#888" onclick="window.location='/'">‹ Characters</button>
         <div class="char-name" style="font-size:18px">Item Library</div>
       </div>
-      <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">${document.documentElement.getAttribute('data-theme')==='dark'?'☾':'☀'}</button>
     </div>
     <div style="padding:10px 12px 0">
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
@@ -343,11 +343,11 @@ export async function renderList() {
   app.innerHTML = `
     <div class="char-list-header">
       <div class="char-list-title">D&amp;D Character</div>
-      <div class="char-list-sub">Character Sheet</div>
+      <div class="char-list-sub">Companion App</div>
       <div style="display:flex;gap:6px;margin-top:6px">
         <button class="btn btn-sm btn-outline" onclick="window.location='/?view=spells'" style="flex:1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="vertical-align:middle;margin-right:3px"><rect x="1.5" y="2" width="11" height="9.5" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="3.5" y1="4.5" x2="10.5" y2="4.5" stroke="currentColor" stroke-width="1.2"/><line x1="3.5" y1="6.8" x2="10.5" y2="6.8" stroke="currentColor" stroke-width="1.2"/><line x1="3.5" y1="9.1" x2="7.5" y2="9.1" stroke="currentColor" stroke-width="1.2"/></svg>Spells</button>
         <button class="btn btn-sm btn-outline" onclick="window.location='/?view=items'" style="flex:1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="vertical-align:middle;margin-right:3px"><rect x="2" y="3" width="10" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M4.5 5.5V4a2.5 2.5 0 015 0v1.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>Items</button>
-        <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">${document.documentElement.getAttribute('data-theme')==='dark'?'☾':'☀'}</button>
       </div>
     </div>
     <div id="char-list-body" style="padding:8px 0"></div>
@@ -444,7 +444,7 @@ function _renderStep() {
       <div class="builder-header-top">
         <button class="back-btn" onclick="${step === 1 ? "window.location='/'" : 'prevStep()'}" style="padding:0">‹ ${step === 1 ? 'Back' : 'Previous'}</button>
         <div class="builder-title">New Character</div>
-        <button class="icon-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme" style="margin-left:auto">🌓</button>
+        <button class="theme-toggle-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme" style="margin-left:auto">${document.documentElement.getAttribute('data-theme')==='dark'?'☾':'☀'}</button>
       </div>
       <div class="step-dots">${labels.map((_, i) => `<div class="step-dot ${i + 1 < step ? 'done' : i + 1 === step ? 'active' : ''}"></div>`).join('')}</div>
       <div class="step-label">Step ${step} of ${total} — ${labels[step - 1]}</div>
@@ -873,6 +873,9 @@ window.toggleTheme = () => {
   const next = cur === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('dnd-theme', next);
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.textContent = next === 'dark' ? '☾' : '☀';
+  });
 };
 
 // Global handlers (called from onclick)
