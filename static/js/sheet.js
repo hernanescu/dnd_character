@@ -220,6 +220,8 @@ function render() {
   const hpPct = char.hp_current / char.hp_max;
   const tabs = getTabs();
   const clsName = char.class_key.charAt(0).toUpperCase() + char.class_key.slice(1);
+  const acVal = computeAC();
+  const ppVal = 10 + skillBonus('perception', 'wis');
   app.innerHTML = `
     <div class="app-header">
       <div>
@@ -227,7 +229,15 @@ function render() {
         <div class="char-name">${escHtml(char.name)}</div>
         <div class="char-meta">${clsName} · ${char.subclass_key ? escHtml(char.subclass_key) : 'No Subclass'} · Level ${char.level} · ${escHtml(char.background_name)}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:4px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="hp-badge" style="cursor:default" title="Armor Class">
+          <div class="hp-num">${acVal}</div>
+          <div class="hp-label">AC</div>
+        </div>
+        <div class="hp-badge" style="cursor:default" title="Passive Perception">
+          <div class="hp-num">${ppVal}</div>
+          <div class="hp-label">P. PER</div>
+        </div>
         <div class="hp-badge" onclick="openHpEditor()">
           <div class="hp-num${hpPct <= 0.3 ? ' hurt' : ''}">${char.hp_current}</div>
           <div class="hp-label">/ ${char.hp_max} HP</div>
