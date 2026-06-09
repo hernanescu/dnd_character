@@ -339,6 +339,11 @@ body {
 .spell-meta { font-size: 10px; color: var(--text-dim); margin-top: 6px; gap: 4px 12px; flex-wrap: wrap; display: none; line-height: 1.6; }
 .spell-tag { display: inline-block; font-size: 8px; background: var(--text-dim); color: var(--surface); padding: 1px 4px; border-radius: 3px; vertical-align: middle; margin-left: 2px; }
 .spell-higher { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.5; display: none; font-style: italic; }
+.sp-result-row {
+  display: flex; align-items: center; padding: 6px 8px;
+  border-radius: var(--radius-sm); cursor: pointer;
+}
+.sp-result-row:hover { background: var(--surface2); }
 
 /* ── INVENTORY ──────────────────────────────────────────── */
 .coin-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 16px; }

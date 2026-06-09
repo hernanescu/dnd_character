@@ -578,7 +578,12 @@ function renderSpells(el) {
         <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="freeSlot('${lvl}')">+</button>
         <button class="btn-icon" style="font-size:14px" onclick="restoreSlots('${lvl}')" title="Restore all">↺</button>
       </div>`).join('')}` : ''}
-    ${!known.length ? '<div style="padding:24px;text-align:center;color:#888;font-size:13px">No known spells</div>' : ''}
+    ${editMode ? `
+    <div class="section-title" style="margin-top:12px">Add Spell</div>
+    <input class="input-field" id="spell-search" placeholder="Search ${char.class_key} spells…" oninput="filterSpellPicker()" style="width:100%;margin-bottom:6px">
+    <div id="sp-results" style="max-height:220px;overflow-y:auto;margin-bottom:12px"></div>
+    ` : ''}
+    ${!known.length && !editMode ? '<div style="padding:24px;text-align:center;color:#888;font-size:13px">No known spells</div>' : ''}
     ${levels.map(lvl => {
       const label = lvl == 0 ? 'Cantrips' : ordinalLabel(lvl);
       const isOpen = expandedLevels[lvl] !== false;
@@ -595,6 +600,7 @@ function renderSpells(el) {
       </div>`;
     }).join('')}
   `;
+  if (editMode) renderSpellPickerResults();
 }
 
 function ordinalLabel(n) {
@@ -1112,7 +1118,37 @@ window.removeSpell = (key) => {
   if (!editMode) return;
   const known = (char.spells_known || []).filter(k => k !== key);
   save({ spells_known: known }).then(() => renderActiveTab());
+  log('spell', `Removed spell: ${key}`);
 };
+
+function renderSpellPickerResults() {
+  const q = (document.getElementById('spell-search')?.value || '').toLowerCase();
+  const results = document.getElementById('sp-results');
+  if (!results || !spellData) return;
+  const known = new Set(char.spells_known || []);
+  const entries = Object.entries(spellData)
+    .filter(([k, s]) => s.classes?.includes(char.class_key) && !known.has(k))
+    .filter(([, s]) => !q || s.name.toLowerCase().includes(q))
+    .sort((a, b) => a[1].level - b[1].level || a[1].name.localeCompare(b[1].name))
+    .slice(0, 40);
+  results.innerHTML = entries.map(([k, s]) => {
+    const lvlLabel = s.level === 0 ? 'Cantrip' : `Lv ${s.level}`;
+    return `<div class="sp-result-row" data-spell-key="${escHtml(k)}" onclick="addSpell(this.dataset.spellKey)">
+      <span class="spell-level-badge" style="font-size:8px;flex-shrink:0">${lvlLabel}</span>
+      <span style="font-size:12px;font-weight:600;flex:1;margin:0 6px">${escHtml(s.name)}</span>
+      <span style="font-size:10px;color:var(--text-dim)">${escHtml(s.school)}</span>
+    </div>`;
+  }).join('');
+  if (!entries.length) results.innerHTML = '<div style="font-size:11px;color:#888;padding:4px">No spells found.</div>';
+}
+
+window.addSpell = (key) => {
+  if (!editMode) return;
+  const known = [...(char.spells_known || []), key];
+  save({ spells_known: known }).then(() => renderActiveTab());
+};
+
+window.filterSpellPicker = () => renderSpellPickerResults();
 
 window.toggleSkillProf = (skillKey) => {
   if (!editMode) return;
