@@ -465,8 +465,8 @@ body {
   cursor: pointer; text-decoration: none; color: inherit;
 }
 .char-card:hover { background: var(--surface2); }
-.char-card-name { font-size: 16px; font-weight: 700; flex: 1; }
-.char-card-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.char-card-name { font-family: var(--font-display); font-size: 18px; font-weight: 500; flex: 1; }
+.char-card-meta { font-family: var(--font-body); font-size: 12px; color: var(--text-dim); margin-top: 3px; }
 .char-card-chevron { color: var(--border); font-size: 18px; }
 .icon-btn {
   width: 32px; height: 32px; border-radius: 50%;
