@@ -11,22 +11,25 @@
   font-weight: 500;
 }
 @font-face {
-  font-family: 'Lato';
-  src: url('/static/fonts/Lato-Regular.woff2') format('woff2'),
-       url('/static/fonts/Lato-Regular.ttf') format('truetype');
+  font-family: 'EBGaramond';
+  src: url('/static/fonts/EBGaramond-Regular.woff2') format('woff2');
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
-  font-family: 'Lato';
-  src: url('/static/fonts/Lato-Bold.woff2') format('woff2'),
-       url('/static/fonts/Lato-Bold.ttf') format('truetype');
-  font-weight: 700;
+  font-family: 'EBGaramond';
+  src: url('/static/fonts/EBGaramond-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
 }
 @font-face {
-  font-family: 'Lato';
-  src: url('/static/fonts/Lato-Italic.woff2') format('woff2'),
-       url('/static/fonts/Lato-Italic.ttf') format('truetype');
+  font-family: 'EBGaramond';
+  src: url('/static/fonts/EBGaramond-Italic.woff2') format('woff2');
+  font-weight: 400;
   font-style: italic;
+  font-display: swap;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,7 +44,7 @@
   --text-dim:      #8a8078;
   --text-faint:    #a09890;
   --font-display:  'AlegreyaSC', Georgia, serif;
-  --font-body:     system-ui, -apple-system, sans-serif;
+  --font-body:     'EBGaramond', Georgia, serif;
   --radius:        8px;
   --radius-sm:     5px;
   --gray-bg:       var(--surface2);
