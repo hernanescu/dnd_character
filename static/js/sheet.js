@@ -143,7 +143,7 @@ const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', i
 const SPELLCASTING_ABILITY = { artificer: 'int', bard: 'cha', cleric: 'wis', druid: 'wis', paladin: 'cha', ranger: 'wis', sorcerer: 'cha', warlock: 'cha', wizard: 'int' };
 function getTabs() {
   const hasSpells = spellData && Object.keys(spellData).length > 0;
-  return hasSpells ? ['Stats', 'Combat', 'Spells', 'Inventory', 'Feats', 'Notes'] : ['Stats', 'Combat', 'Inventory', 'Feats', 'Notes'];
+  return hasSpells ? ['Stats', 'Combat', 'Spells', 'Inventory', 'Feats', 'World'] : ['Stats', 'Combat', 'Inventory', 'Feats', 'World'];
 }
 
 let char = null;
@@ -154,6 +154,7 @@ let itemData = null;
 let activeTab = 0;
 let editMode = false;
 let _expandedItems = {};
+let _worldAddType = null;
 
 function abilityMod(score) { return Math.floor((score - 10) / 2); }
 function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }
@@ -265,7 +266,7 @@ function render() {
 
 function renderActiveTab() {
   const tabs = getTabs();
-  const renderers = { Stats: renderStats, Combat: renderCombat, Spells: renderSpells, Inventory: renderInventory, Feats: renderFeats, Notes: renderNotes };
+  const renderers = { Stats: renderStats, Combat: renderCombat, Spells: renderSpells, Inventory: renderInventory, Feats: renderFeats, World: renderWorld };
   const fn = renderers[tabs[activeTab]];
   if (fn) fn(document.getElementById(`tab-${activeTab}`));
 }
@@ -987,12 +988,23 @@ function renderFeats(el) {
   el.innerHTML = html;
 }
 
-function renderNotes(el) {
+function renderWorld(el) {
   const notes = char.notes || [];
   el.innerHTML = `
-    <div style="margin-bottom:12px">
-      <button class="btn btn-outline btn-sm" onclick="addNote('npc')">+ NPC</button>
-      <button class="btn btn-outline btn-sm" style="margin-left:6px" onclick="addNote('location')">+ Location</button>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="btn btn-outline btn-sm" onclick="openWorldAdd('npc')">+ NPC</button>
+      <button class="btn btn-outline btn-sm" onclick="openWorldAdd('location')">+ Location</button>
+      <button class="btn btn-outline btn-sm" onclick="openWorldAdd('settlement')">+ Settlement</button>
+    </div>
+    <div id="world-add-form" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;border:1px solid var(--gray-light)">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-dark);margin-bottom:6px" id="world-add-label">Add</div>
+      <textarea id="world-paste" class="input-field" rows="6" placeholder="Paste from Lodestar…" style="width:100%;resize:vertical;font-size:12px;line-height:1.5;font-family:var(--font-body)"></textarea>
+      <div style="font-size:10px;color:var(--gray-mid);margin:5px 0 3px">Or just a name:</div>
+      <input type="text" id="world-title-input" class="input-field" placeholder="Entity name…" style="width:100%">
+      <div class="add-row" style="margin-top:8px;padding:0;justify-content:flex-end">
+        <button class="btn btn-outline btn-sm" onclick="cancelWorldAdd()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="submitWorldEntry()">Add</button>
+      </div>
     </div>
     ${notes.map((n, i) => `
       <div class="note-card">
@@ -1003,7 +1015,7 @@ function renderNotes(el) {
         <div class="note-title" contenteditable="true" onblur="updateNote(${i},'title',this.textContent)">${escHtml(n.title)}</div>
         <div class="note-body" contenteditable="true" onblur="updateNote(${i},'body',this.textContent)">${escHtml(n.body)}</div>
       </div>`).join('')}
-    ${!notes.length ? '<div style="padding:24px;text-align:center;color:#888;font-size:13px">No notes yet</div>' : ''}
+    ${!notes.length ? '<div style="padding:24px;text-align:center;color:#888;font-size:13px">No world entries yet</div>' : ''}
   `;
 }
 
@@ -1248,10 +1260,44 @@ window.removeFeat = (i) => {
   log('feat', `Removed feature: ${name}`);
 };
 
-window.addNote = (type) => {
-  const title = prompt(`Title (${type}):`);
+window.openWorldAdd = (type) => {
+  _worldAddType = type;
+  const form = document.getElementById('world-add-form');
+  const label = document.getElementById('world-add-label');
+  const ta = document.getElementById('world-paste');
+  const ti = document.getElementById('world-title-input');
+  if (!form) return;
+  form.style.display = 'block';
+  if (label) label.textContent = `Add ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  if (ta) ta.value = '';
+  if (ti) ti.value = '';
+  if (ta) ta.focus();
+};
+
+window.cancelWorldAdd = () => {
+  _worldAddType = null;
+  const form = document.getElementById('world-add-form');
+  if (form) form.style.display = 'none';
+};
+
+window.submitWorldEntry = () => {
+  const type = _worldAddType;
+  if (!type) return;
+  const paste  = document.getElementById('world-paste')?.value.trim();
+  const manual = document.getElementById('world-title-input')?.value.trim();
+  let title = '', body = '';
+  if (paste) {
+    const lines = paste.split('\n');
+    const first = lines[0] || '';
+    const dash = first.indexOf(' — ');
+    title = dash >= 0 ? first.slice(dash + 3).trim() : first.trim();
+    body  = lines.slice(1).join('\n').trim();
+  } else if (manual) {
+    title = manual;
+  }
   if (!title) return;
-  const notes = [...(char.notes || []), { type, title, body: '' }];
+  const notes = [...(char.notes || []), { type, title, body }];
+  window.cancelWorldAdd();
   save({ notes }).then(() => renderActiveTab());
 };
 
