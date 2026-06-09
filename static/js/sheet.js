@@ -181,6 +181,9 @@ export async function initSheet(id) {
       charData, api.getClass(charData.class_key), api.getSpells(charData.class_key), api.getBackgrounds(), api.getItems(),
     ]);
     char.background_name = (bgData[char.background] || {}).name || char.background;
+    char.lucky_points = char.lucky_points ?? 3;
+    const biMax = profBonus(char.level);
+    char.bardic_inspiration = char.bardic_inspiration ?? biMax;
   } catch (e) {
     app.innerHTML = `<div style="padding:24px;color:#888">Error loading character</div>`;
     return;
@@ -210,7 +213,7 @@ function render() {
       </div>
     </div>
     <div class="resource-bar">
-      ${[['momentum','Momentum',0,10],['supply','Supplies',0,5],['stress','Stress',0,5]].map(([key,label]) => {
+      ${[['momentum','Momentum',0,10],['supply','Supplies',0,5],['stress','Stress',0,5],['lucky_points','Lucky',0,3]].map(([key,label,min,max]) => {
         const val = char[key] ?? RESOURCE_DEFAULTS[key];
         return `<div class="resource-item">
           <div class="resource-label">${label}</div>
@@ -446,9 +449,17 @@ function renderCombat(el) {
     <div id="w-link-status" style="font-size:10px;color:#888;margin-top:4px"></div>` : ''}
     ${char.class_key === 'bard' ? `
     <div class="section-title">Bardic Inspiration</div>
-    <div style="display:flex;align-items:center;padding:8px 0">
-      <div class="inspiration-die">${inspirationDieByLevel(char.level)}</div>
-      <div style="font-size:12px;color:#555">Inspiration Die · ${subclassName}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="inspiration-die">${inspirationDieByLevel(char.level)}</div>
+        <div style="font-size:12px;color:#555">${subclassName}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <button class="resource-btn" onclick="adjBardicInspiration(-1)">−</button>
+        <div class="resource-val" id="res-bardic_inspiration">${char.bardic_inspiration ?? profBonus(char.level)}</div>
+        <span style="font-size:10px;color:#888">/ ${profBonus(char.level)}</span>
+        <button class="resource-btn" onclick="adjBardicInspiration(+1)">+</button>
+      </div>
     </div>` : ''}
     <div class="section-title">Saving Throws</div>
     <div class="saves-grid">
@@ -669,7 +680,7 @@ function renderInventory(el) {
           <span style="font-size:11px;flex-shrink:0;width:14px;text-align:center;cursor:pointer" onclick="event.stopPropagation();toggleEquip(${i})" title="${isEq ? 'Equipped (click to unequip)' : 'Unequipped (click to equip)'}">${isEq ? '<span style="color:#4a4">●</span>' : '<span style="color:#aaa">○</span>'}</span>
           ${lib ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${rColor};flex-shrink:0"></span>` : ''}
           <span class="spell-name" style="font-size:12px">${escHtml(item.name)}</span>
-          <span class="spell-school" style="font-size:10px">x${item.qty}</span>
+          <span class="spell-school" style="font-size:13px;font-weight:600;color:var(--text)">x${item.qty}</span>
           ${editMode ? `<button class="delete-btn" onclick="event.stopPropagation();removeItem(${i})" style="font-size:11px;flex-shrink:0">×</button>` : ''}
         </div>
         <div id="item-detail-${i}" class="spell-desc" style="display:none;padding-top:6px">
@@ -1216,8 +1227,8 @@ window.updateNote = (i, field, val) => {
   save({ notes });
 };
 
-const RESOURCE_RANGES = { momentum: { min: 0, max: 10 }, supply: { min: 0, max: 5 }, stress: { min: 0, max: 5 } };
-const RESOURCE_DEFAULTS = { momentum: 0, supply: 5, stress: 5 };
+const RESOURCE_RANGES = { momentum: { min: 0, max: 10 }, supply: { min: 0, max: 5 }, stress: { min: 0, max: 5 }, lucky_points: { min: 0, max: 3 } };
+const RESOURCE_DEFAULTS = { momentum: 0, supply: 5, stress: 5, lucky_points: 3 };
 
 window.adjResource = (res, delta) => {
   const range = RESOURCE_RANGES[res];
@@ -1225,7 +1236,20 @@ window.adjResource = (res, delta) => {
   const next = Math.min(range.max, Math.max(range.min, cur + delta));
   if (next === cur) return;
   save({ [res]: next }).then(() => {
-    document.getElementById(`res-${res}`).textContent = next;
+    const el = document.getElementById(`res-${res}`);
+    if (el) el.textContent = next;
     log('resource', `${res}: ${cur} → ${next}`);
+  });
+};
+
+window.adjBardicInspiration = (delta) => {
+  const max = profBonus(char.level);
+  const cur = char.bardic_inspiration ?? max;
+  const next = Math.min(max, Math.max(0, cur + delta));
+  if (next === cur) return;
+  save({ bardic_inspiration: next }).then(() => {
+    const el = document.getElementById('res-bardic_inspiration');
+    if (el) el.textContent = next;
+    log('bardic_inspiration', `${cur} → ${next}`);
   });
 };
