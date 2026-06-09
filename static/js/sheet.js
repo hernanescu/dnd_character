@@ -312,7 +312,7 @@ function renderBgCard() {
   return `
     <div class="section-title" style="margin-top:16px">Background: ${escHtml(bg.name)}</div>
     <div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
-      ${bg.description ? `<div style="font-size:11px;margin-bottom:6px">${escHtml(bg.description)}</div>` : ''}
+      ${bg.description ? `<div style="font-size:13px;line-height:1.65;margin-bottom:6px">${escHtml(bg.description)}</div>` : ''}
       ${skills.length ? `<div style="margin-bottom:2px"><span style="color:#888">Skills:</span> <b>${escHtml(skills.join(', '))}</b></div>` : ''}
       ${tools.length ? `<div style="margin-bottom:2px"><span style="color:#888">Tools:</span> ${escHtml(tools.join(', '))}</div>` : ''}
       ${langs ? `<div style="margin-bottom:2px"><span style="color:#888">Languages:</span> +${langs} of choice</div>` : ''}
