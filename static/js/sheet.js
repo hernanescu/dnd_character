@@ -363,10 +363,11 @@ function _invWeaponEntries() {
   return (char.inventory || []).filter(it => {
     if (!it.equipped) return false;
     const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
-    if (!lib || !lib.weapon_bonus) return false;
+    if (!lib) return false;
     if (it.base_weapon) return true;
     if (lib.base_weapon_type) return true;
     if (_baseKeyFromName(it.name)) return true;
+    if (lib.weapon_bonus) return true;
     return false;
   });
 }
@@ -393,7 +394,7 @@ function renderCombat(el) {
     </div>`;
   }
 
-  function invWeaponRow(it) {
+  function invWeaponRow(it, idx) {
     const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
     const bonus = lib?.weapon_bonus || 0;
     const baseKey = it.base_weapon || _baseKeyFromName(it.name);
@@ -401,10 +402,25 @@ function renderCombat(el) {
     const die = base?.die || '1d6';
     const isFinesse = base?.props?.includes('finesse');
     const mod = isFinesse ? Math.max(abilityMod(scores.str || 10), abilityMod(scores.dex || 10)) : abilityMod(scores.str || 10);
-    const atk = fmtBonus(mod + pb + bonus);
-    const typeLine = `${base?.type || ''} · +${bonus} magic`;
-    const eqBadge = '<span style="font-size:9px;color:#4a4;margin-left:4px">● equipped</span>';
-    return wRow(`${escHtml(it.name)}${eqBadge}`, die, atk, mod, typeLine, false);
+    const prof = it.proficient !== false;
+    const atk = fmtBonus(mod + (prof ? pb : 0) + bonus);
+    const typeParts = [];
+    if (base?.type) typeParts.push(base.type);
+    if (bonus) typeParts.push(`+${bonus} magic`);
+    const typeLine = typeParts.join(' · ');
+    const eqBadge = '<span class="eq-dot"></span>';
+    return `<div class="weapon-row">
+      <div>
+        <div class="weapon-name">${escHtml(it.name)}${eqBadge}<span style="font-size:9px;color:#4a4;margin-left:2px">equipped</span></div>
+        <div style="font-size:10px;color:#888">${typeLine}</div>
+      </div>
+      <div class="weapon-atk">${atk}</div>
+      <div class="weapon-dmg">${die}${mod >= 0 ? '+' : ''}${mod}</div>
+      <div class="prof-toggle" onclick="toggleWeaponProf(${idx})" title="Toggle proficiency">
+        <div class="prof-check${prof ? ' on' : ''}"></div>
+        <span class="prof-label">PROF</span>
+      </div>
+    </div>`;
   }
 
   el.innerHTML = `
@@ -426,9 +442,15 @@ function renderCombat(el) {
     </div>
     ${invWeapons.length ? `
     <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
-      <span>Equipped Items</span>
+      <span>Equipped Weapons</span>
     </div>
-    ${invWeapons.map(invWeaponRow).join('')}` : ''}
+    ${(char.inventory || []).map((it, idx) => {
+      if (!it.equipped) return '';
+      const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
+      if (!lib) return '';
+      if (!it.base_weapon && !lib.base_weapon_type && !_baseKeyFromName(it.name) && !lib.weapon_bonus) return '';
+      return invWeaponRow(it, idx);
+    }).join('')}` : ''}
     <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;${invWeapons.length ? 'margin-top:10px' : ''}">
       <span>Weapons</span>
       <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
@@ -548,11 +570,10 @@ function renderSpells(el) {
     ${Object.entries(slots).sort(([a],[b])=>+a-+b).map(([lvl, s]) => `
       <div class="spell-level-row">
         <div class="spell-level-label">Lv ${lvl}</div>
-        <div class="slot-pips">
-          ${Array.from({length: s.max}, (_, i) => `
-            <div class="slot-pip${i < s.used ? ' used' : ''}" onclick="toggleSlot('${lvl}',${i})"></div>`).join('')}
-        </div>
-        <button class="btn-icon" onclick="restoreSlots('${lvl}')" title="Restore">↺</button>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:700">${s.used}/${s.max}</div>
+        <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="freeSlot('${lvl}')">−</button>
+        <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="useSlot('${lvl}')">+</button>
+        <button class="btn-icon" style="font-size:14px" onclick="restoreSlots('${lvl}')" title="Restore all">↺</button>
       </div>`).join('')}` : ''}
     ${!known.length ? '<div style="padding:24px;text-align:center;color:#888;font-size:13px">No known spells</div>' : ''}
     ${levels.map(lvl => {
@@ -740,12 +761,12 @@ function renderInventory(el) {
     }).join('')}
     ${editMode ? `
     <div class="add-row">
-      <input class="input-field" id="item-name" placeholder="Item name" style="flex:1">
+      <input class="input-field" id="item-name" placeholder="Add custom item" style="flex:1">
       <input class="input-field input-sm" id="item-qty" placeholder="1" type="number" min="1" value="1" style="width:50px">
       <button class="btn btn-primary btn-sm" onclick="addItem()">+</button>
     </div>
     <div style="margin-top:6px">
-      <button class="btn btn-sm btn-outline" onclick="toggleItemPicker()" style="width:100%">📖 Browse Item Library</button>
+      <button class="btn btn-sm btn-outline" onclick="toggleItemPicker()" style="width:100%"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="vertical-align:middle;margin-right:4px"><rect x="2" y="1.5" width="10" height="11" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="4.5" y1="4.5" x2="9.5" y2="4.5" stroke="currentColor" stroke-width="1.2"/><line x1="4.5" y1="7" x2="9.5" y2="7" stroke="currentColor" stroke-width="1.2"/><line x1="4.5" y1="9.5" x2="7.5" y2="9.5" stroke="currentColor" stroke-width="1.2"/></svg>Browse Item Library</button>
       <div id="item-picker" style="display:none;margin-top:6px;padding:8px;background:var(--gray-bg);border-radius:6px;max-height:300px;overflow-y:auto">
         <input class="input-field input-sm" id="ip-search" placeholder="Search items..." style="width:100%;margin-bottom:6px" oninput="filterItemPicker()">
         <div id="ip-results"></div>
@@ -1064,6 +1085,22 @@ window.restoreSlots = (level) => {
   log('spell-slot', `Restored level ${level} slots`);
 };
 
+window.useSlot = (level) => {
+  const slots = JSON.parse(JSON.stringify(char.spell_slots));
+  if (!slots[level] || slots[level].used >= slots[level].max) return;
+  slots[level].used++;
+  save({ spell_slots: slots }).then(() => renderActiveTab());
+  log('spell-slot', `Level ${level} slot used: ${slots[level].used}/${slots[level].max}`);
+};
+
+window.freeSlot = (level) => {
+  const slots = JSON.parse(JSON.stringify(char.spell_slots));
+  if (!slots[level] || slots[level].used <= 0) return;
+  slots[level].used--;
+  save({ spell_slots: slots }).then(() => renderActiveTab());
+  log('spell-slot', `Level ${level} slot freed: ${slots[level].used}/${slots[level].max}`);
+};
+
 window.toggleSkillProf = (skillKey) => {
   if (!editMode) return;
   const profs = [...(char.skill_proficiencies || [])];
@@ -1184,6 +1221,13 @@ window.toggleEquip = (i) => {
   if (!inventory[i].equipped) inventory[i].attuned = false;
   save({ inventory }).then(() => renderActiveTab());
   log('item', `Toggled equip ${inventory[i].name}: ${inventory[i].equipped}`);
+};
+
+window.toggleWeaponProf = (i) => {
+  const inventory = JSON.parse(JSON.stringify(char.inventory || []));
+  inventory[i].proficient = inventory[i].proficient === false ? true : false;
+  save({ inventory }).then(() => renderActiveTab());
+  log('weapon', `Toggled proficiency ${inventory[i].name}: ${inventory[i].proficient}`);
 };
 
 window.toggleAttune = (i) => {

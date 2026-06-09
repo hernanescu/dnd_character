@@ -345,8 +345,8 @@ export async function renderList() {
       <div class="char-list-title">D&amp;D Character</div>
       <div class="char-list-sub">Character Sheet</div>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=spells'" style="flex:1">📖 Spells</button>
-        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=items'" style="flex:1">🎒 Items</button>
+        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=spells'" style="flex:1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="vertical-align:middle;margin-right:3px"><rect x="1.5" y="2" width="11" height="9.5" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="3.5" y1="4.5" x2="10.5" y2="4.5" stroke="currentColor" stroke-width="1.2"/><line x1="3.5" y1="6.8" x2="10.5" y2="6.8" stroke="currentColor" stroke-width="1.2"/><line x1="3.5" y1="9.1" x2="7.5" y2="9.1" stroke="currentColor" stroke-width="1.2"/></svg>Spells</button>
+        <button class="btn btn-sm btn-outline" onclick="window.location='/?view=items'" style="flex:1"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="vertical-align:middle;margin-right:3px"><rect x="2" y="3" width="10" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M4.5 5.5V4a2.5 2.5 0 015 0v1.5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>Items</button>
         <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
       </div>
     </div>
@@ -398,7 +398,7 @@ export async function initBuilder() {
     step: 1, name: '', classKey: 'bard', level: 1, race: '',
     abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
     abilityMode: 'array',
-    background: '', bgFilter: 'all', classSkills: [], racialSkills: [], subclass: '', choices: {}, flexAsiChoices: [],
+    background: '', bgFilter: 'all', classSkills: [], racialSkills: [], expertise: [], subclass: '', choices: {}, flexAsiChoices: [],
     cantrips: [], spells: [], classData: null, backgroundsData: null, spellData: null, spellFilter: '',
   };
   window.state = state;
@@ -441,11 +441,13 @@ function _renderStep() {
   const total = labels.length;
   app.innerHTML = `
     <div class="builder-header">
-      <button class="back-btn" onclick="${step === 1 ? "window.location='/'" : 'prevStep()'}">‹ ${step === 1 ? 'Back' : 'Previous'}</button>
-      <div class="builder-title">New Character</div>
+      <div class="builder-header-top">
+        <button class="back-btn" onclick="${step === 1 ? "window.location='/'" : 'prevStep()'}" style="padding:0">‹ ${step === 1 ? 'Back' : 'Previous'}</button>
+        <div class="builder-title">New Character</div>
+        <button class="icon-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme" style="margin-left:auto">🌓</button>
+      </div>
       <div class="step-dots">${labels.map((_, i) => `<div class="step-dot ${i + 1 < step ? 'done' : i + 1 === step ? 'active' : ''}"></div>`).join('')}</div>
       <div class="step-label">Step ${step} of ${total} — ${labels[step - 1]}</div>
-      <button class="theme-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme" style="margin-left:auto">🌓</button>
     </div>
     <div class="builder-body" id="builder-body"></div>
     <div class="builder-nav" id="builder-nav"></div>
@@ -474,9 +476,9 @@ function renderStep1(body) {
     <div class="pills">${RACES.map(r => `<div class="pill${state.race === r.key ? ' selected' : ''}" onclick="selectRace('${r.key}')">${r.name}</div>`).join('')}</div>
     ${selRace ? `
     <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
-      <div style="font-weight:700;margin-bottom:4px">${escHtml(selRace.name)} <span style="font-weight:400;color:#888">· ${selRace.size} · Speed ${selRace.speed}ft</span></div>
+      <div style="font-weight:700;margin-bottom:4px">${escHtml(selRace.name)} <span style="font-weight:400;color:var(--text-dim)">· ${selRace.size} · Speed ${selRace.speed}ft</span></div>
       <div style="color:var(--accent,#b48a40);margin-bottom:6px;font-size:11px">${escHtml(asiStr)}${escHtml(flexNote)}</div>
-      <div style="color:#888;margin-bottom:6px;font-size:11px">${escHtml(selRace.desc)}</div>
+      <div style="color:var(--text-dim);margin-bottom:6px;font-size:11px">${escHtml(selRace.desc)}</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
         ${selRace.traits.map(t=>`<span style="font-size:10px;background:var(--card-bg);border:1px solid var(--gray-light);border-radius:8px;padding:2px 8px">${escHtml(t)}</span>`).join('')}
       </div>
@@ -507,7 +509,7 @@ function renderStep2(body) {
           return `<div class="pill${picked ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="toggleFlexAsi('${ab}')">${ABILITY_NAMES[ab]}</div>`;
         }).join('')}
       </div>
-      <div style="font-size:10px;color:#888;margin-top:4px">${state.flexAsiChoices.length}/${flex.count} chosen</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:4px">${state.flexAsiChoices.length}/${flex.count} chosen</div>
     </div>` : '';
 
   body.innerHTML = `
@@ -557,15 +559,15 @@ function renderStep2(body) {
         const v = state.abilityAssign[ab];
         return `<div class="ability-assign-row">
           <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
-          <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;display:flex;align-items:center;gap:6px;padding:8px 6px">
             <span style="font-size:18px;font-weight:700;min-width:28px;text-align:center">${v !== null ? v : '—'}</span>
             <button class="btn btn-sm btn-outline" onclick="rollAbility('${ab}')">↺</button>
           </div>
           ${rb ? `<span class="racial-bonus">+${rb}</span>` : ''}
         </div>`;
       }).join('')}
-      <button class="btn btn-primary" onclick="rollAll()" style="margin-top:8px;width:100%">Roll All</button>
-    </div>`}
+    </div>
+      <button class="btn btn-primary" onclick="rollAll()" style="margin-top:8px;width:100%">Roll All</button>`}
     ${allAssigned ? `
       <div style="padding:10px;background:var(--gray-bg);border-radius:4px;font-size:11px;margin-top:8px">
         Final: ${ABILITIES.map(ab => `<b>${ABILITY_NAMES[ab]}</b> ${(state.abilityAssign[ab]||0)+racialBonusFor(ab)}`).join(' · ')}
