@@ -375,6 +375,14 @@ body {
 .weapon-name { flex: 1; font-size: 13px; font-weight: 700; }
 .weapon-atk { font-size: 12px; color: var(--text-dim); }
 .weapon-dmg { font-size: 12px; font-weight: 700; }
+.weapon-col { display: flex; flex-direction: column; align-items: center; min-width: 46px; }
+.weapon-breakdown { font-size: 9px; color: var(--text-dim); white-space: nowrap; }
+.ability-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; margin-left: 3px;
+  font-size: 9px; line-height: 1; color: var(--text-dim);
+  border: 1px solid var(--border); border-radius: 50%; cursor: pointer;
+}
 
 .item-row {
   display: flex; align-items: center;

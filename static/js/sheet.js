@@ -1,4 +1,12 @@
 import { api } from '/static/js/api.js';
+import {
+  isAbilityToggleable,
+  isRangedWeapon,
+  resolveWeaponAbility,
+  weaponAttackBonus,
+  weaponDamageMod,
+  formatBonusBreakdown,
+} from '/static/js/combat-utils.js';
 
 const SKILLS = [
   { key: 'Acrobatics',      ability: 'dex', label: 'Acrobatics' },
@@ -365,9 +373,9 @@ function _baseKeyFromName(name) {
 function _invWeaponEntries() {
   return (char.inventory || []).filter(it => {
     if (!it.equipped) return false;
+    if (it.base_weapon) return true;
     const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
     if (!lib) return false;
-    if (it.base_weapon) return true;
     if (lib.base_weapon_type) return true;
     if (_baseKeyFromName(it.name)) return true;
     if (lib.weapon_bonus) return true;
@@ -403,22 +411,43 @@ function renderCombat(el) {
     const baseKey = it.base_weapon || _baseKeyFromName(it.name);
     const base = baseKey ? BASE_WEAPONS[baseKey] : null;
     const die = base?.die || '1d6';
-    const isFinesse = base?.props?.includes('finesse');
-    const mod = isFinesse ? Math.max(abilityMod(scores.str || 10), abilityMod(scores.dex || 10)) : abilityMod(scores.str || 10);
+    const props = base?.props || [];
+    const strMod = abilityMod(scores.str || 10);
+    const dexMod = abilityMod(scores.dex || 10);
+    const ability = resolveWeaponAbility(props, it.preferred_ability, strMod, dexMod);
+    const mod = ability === 'dex' ? dexMod : strMod;
     const prof = it.proficient !== false;
-    const atk = fmtBonus(mod + (prof ? pb : 0) + bonus);
+    const atkBonus = weaponAttackBonus(mod, prof, pb, bonus);
+    const dmgMod = weaponDamageMod(mod, bonus);
+    const atk = fmtBonus(atkBonus);
+    const dmg = `${die}${dmgMod >= 0 ? '+' : ''}${dmgMod}`;
+    const atkParts = [{ label: ABILITY_NAMES[ability], value: mod }];
+    if (prof) atkParts.push({ label: 'PROF', value: pb });
+    if (bonus) atkParts.push({ label: 'magic', value: bonus });
+    const dmgParts = [{ label: ABILITY_NAMES[ability], value: mod }];
+    if (bonus) dmgParts.push({ label: 'magic', value: bonus });
     const typeParts = [];
     if (base?.type) typeParts.push(base.type);
     if (bonus) typeParts.push(`+${bonus} magic`);
+    if (isRangedWeapon(props)) typeParts.push('ranged');
     const typeLine = typeParts.join(' · ');
     const eqBadge = '<span class="eq-dot"></span>';
+    const abilityToggle = isAbilityToggleable(props)
+      ? `<span class="ability-toggle" onclick="toggleWeaponAbility(${idx})" title="Switch to ${ability === 'dex' ? 'STR' : 'DEX'}">⇄</span>`
+      : '';
     return `<div class="weapon-row">
       <div>
         <div class="weapon-name">${escHtml(it.name)}${eqBadge}<span style="font-size:9px;color:#4a4;margin-left:2px">equipped</span></div>
         <div style="font-size:10px;color:#888">${typeLine}</div>
       </div>
-      <div class="weapon-atk">${atk}</div>
-      <div class="weapon-dmg">${die}${mod >= 0 ? '+' : ''}${mod}</div>
+      <div class="weapon-col">
+        <div class="weapon-atk">${atk}${abilityToggle}</div>
+        <div class="weapon-breakdown">${formatBonusBreakdown(atkParts)}</div>
+      </div>
+      <div class="weapon-col">
+        <div class="weapon-dmg">${dmg}</div>
+        <div class="weapon-breakdown">${formatBonusBreakdown(dmgParts)}</div>
+      </div>
       <div class="prof-toggle" onclick="toggleWeaponProf(${idx})" title="Toggle proficiency">
         <div class="prof-check${prof ? ' on' : ''}"></div>
         <span class="prof-label">PROF</span>
@@ -450,8 +479,8 @@ function renderCombat(el) {
     ${(char.inventory || []).map((it, idx) => {
       if (!it.equipped) return '';
       const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
-      if (!lib) return '';
-      if (!it.base_weapon && !lib.base_weapon_type && !_baseKeyFromName(it.name) && !lib.weapon_bonus) return '';
+      const isWeapon = it.base_weapon || lib?.base_weapon_type || _baseKeyFromName(it.name) || lib?.weapon_bonus;
+      if (!isWeapon) return '';
       return invWeaponRow(it, idx);
     }).join('')}` : ''}
     <div class="section-title" style="display:flex;align-items:center;justify-content:space-between;${invWeapons.length ? 'margin-top:10px' : ''}">
@@ -1281,6 +1310,20 @@ window.toggleWeaponProf = (i) => {
   inventory[i].proficient = inventory[i].proficient === false ? true : false;
   save({ inventory }).then(() => renderActiveTab());
   log('weapon', `Toggled proficiency ${inventory[i].name}: ${inventory[i].proficient}`);
+};
+
+window.toggleWeaponAbility = (i) => {
+  const inventory = JSON.parse(JSON.stringify(char.inventory || []));
+  const it = inventory[i];
+  const baseKey = it.base_weapon || _baseKeyFromName(it.name);
+  const base = baseKey ? BASE_WEAPONS[baseKey] : null;
+  const props = base?.props || [];
+  const strMod = abilityMod(char.ability_scores?.str || 10);
+  const dexMod = abilityMod(char.ability_scores?.dex || 10);
+  const current = resolveWeaponAbility(props, it.preferred_ability, strMod, dexMod);
+  it.preferred_ability = current === 'dex' ? 'str' : 'dex';
+  save({ inventory }).then(() => renderActiveTab());
+  log('weapon', `Set ${it.name} attack ability to ${it.preferred_ability}`);
 };
 
 window.toggleAttune = (i) => {
