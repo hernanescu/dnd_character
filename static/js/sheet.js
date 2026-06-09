@@ -608,7 +608,7 @@ function spellCard(s) {
   const ritual = s.ritual ? ' <span class="spell-tag">R</span>' : '';
   const conc = s.concentration ? ' <span class="spell-tag">C</span>' : '';
   const removeBtn = editMode && s._key
-    ? `<button class="delete-btn" onclick="event.stopPropagation();removeSpell('${s._key}')" title="Remove">×</button>`
+    ? `<button class="delete-btn" data-spell-key="${escHtml(s._key)}" onclick="event.stopPropagation();removeSpell(this.dataset.spellKey)" title="Remove">×</button>`
     : '';
   return `<div class="spell-card" onclick="this.classList.toggle('expanded')">
     <div class="spell-header">
@@ -1109,6 +1109,7 @@ window.freeSlot = (level) => {
 };
 
 window.removeSpell = (key) => {
+  if (!editMode) return;
   const known = (char.spells_known || []).filter(k => k !== key);
   save({ spells_known: known }).then(() => renderActiveTab());
 };
