@@ -157,6 +157,7 @@ let _expandedItems = {};
 
 function abilityMod(score) { return Math.floor((score - 10) / 2); }
 function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }
+function bardicInspirationMax() { return Math.max(1, abilityMod(char.ability_scores?.cha ?? 10)); }
 function fmtBonus(n) { return (n >= 0 ? '+' : '') + n; }
 function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function log(category, msg, data) {
@@ -205,8 +206,8 @@ export async function initSheet(id) {
     ]);
     char.background_name = (bgData[char.background] || {}).name || char.background;
     char.lucky_points = char.lucky_points ?? 3;
-    const biMax = profBonus(char.level);
-    char.bardic_inspiration = char.bardic_inspiration ?? biMax;
+    char.expertise = char.expertise ?? [];
+    char.bardic_inspiration = char.bardic_inspiration ?? bardicInspirationMax();
   } catch (e) {
     app.innerHTML = `<div style="padding:24px;color:#888">Error loading character</div>`;
     return;
@@ -481,8 +482,8 @@ function renderCombat(el) {
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <button class="resource-btn" onclick="adjBardicInspiration(-1)">−</button>
-        <div class="resource-val" id="res-bardic_inspiration">${char.bardic_inspiration ?? profBonus(char.level)}</div>
-        <span style="font-size:11px;color:var(--gray-mid)">/ ${profBonus(char.level)}</span>
+        <div class="resource-val" id="res-bardic_inspiration">${char.bardic_inspiration ?? bardicInspirationMax()}</div>
+        <span style="font-size:11px;color:var(--gray-mid)">/ ${bardicInspirationMax()}</span>
         <button class="resource-btn" onclick="adjBardicInspiration(+1)">+</button>
       </div>
     </div>` : ''}
@@ -1276,7 +1277,7 @@ window.adjResource = (res, delta) => {
 };
 
 window.adjBardicInspiration = (delta) => {
-  const max = profBonus(char.level);
+  const max = bardicInspirationMax();
   const cur = char.bardic_inspiration ?? max;
   const next = Math.min(max, Math.max(0, cur + delta));
   if (next === cur) return;

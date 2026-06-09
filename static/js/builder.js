@@ -127,6 +127,7 @@ let state = {
   bgFilter: 'all',
   classSkills: [],
   racialSkills: [],
+  expertise: [],
   subclass: '',
   choices: {},
   flexAsiChoices: [],
@@ -579,6 +580,15 @@ function bgSourceFor(key) {
   return 'Other';
 }
 
+function _hasExpertise() {
+  const cls = state.classData;
+  if (!cls || !cls.features_by_level) return false;
+  for (const [lvl, feats] of Object.entries(cls.features_by_level)) {
+    if (parseInt(lvl) <= state.level && feats.includes('Expertise')) return true;
+  }
+  return false;
+}
+
 function renderStep3(body) {
   const allBgKeys = Object.keys(state.backgroundsData);
   const filter = state.bgFilter || 'all';
@@ -631,6 +641,19 @@ function renderStep3(body) {
     <div style="font-size:10px;color:#888;margin-top:2px;margin-bottom:4px">${state.racialSkills.length}/${bonusSkills.count} chosen</div>` : ''}
     <div class="field-label" style="margin-top:12px">${clsName} skills (choose ${max})</div>
     <div class="pills">${classSkillPills}</div>
+    ${_hasExpertise() ? (() => {
+      const profSkills = [...new Set([...bgSkills, ...state.racialSkills, ...state.classSkills])];
+      const expertMax = 2;
+      return `
+      <div class="field-label" style="margin-top:12px">Expertise (choose ${expertMax})</div>
+      <div class="step-sub">Double your proficiency bonus for the chosen skills.</div>
+      <div class="pills">${profSkills.filter(s => ALL_SKILLS.includes(s)).map(s => {
+        const sel = state.expertise.includes(s);
+        const dis = !sel && state.expertise.length >= expertMax;
+        return `<div class="pill${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="toggleExpertise('${s}')">${escHtml(s)}</div>`;
+      }).join('')}</div>
+      <div style="font-size:10px;color:#888;margin-top:2px">${state.expertise.length}/${expertMax} chosen</div>`;
+    })() : ''}
   `;
 }
 
@@ -905,6 +928,12 @@ window.toggleRacialSkill = (s) => {
   else if (state.racialSkills.length < max) state.racialSkills.push(s);
   renderStep();
 };
+window.toggleExpertise = (s) => {
+  const i = state.expertise.indexOf(s);
+  if (i >= 0) state.expertise.splice(i, 1);
+  else if (state.expertise.length < 2) state.expertise.push(s);
+  renderStep();
+};
 window.selectSubclass = (k) => { state.subclass = k; renderStep(); };
 window.toggleChoice = (featName, optName, limit) => {
   if (!state.choices[featName]) state.choices[featName] = [];
@@ -974,7 +1003,7 @@ window.finishBuilder = async () => {
     background: state.background,
     ability_scores: scores,
     skill_proficiencies: skillProf,
-    expertise: [],
+    expertise: state.expertise,
     spells_known: [...state.cantrips, ...state.spells],
     spell_slots: spellSlots,
     hp_max: Math.max(1, hpMax),
