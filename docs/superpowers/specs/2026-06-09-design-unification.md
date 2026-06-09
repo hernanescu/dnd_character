@@ -1,7 +1,7 @@
 # Design Unification — dnd_character & lodestar
 
 **Date:** 2026-06-09  
-**Scope:** Visual design tokens and typography shared across both apps  
+**Scope:** Visual design tokens, typography, and dark mode architecture shared across both apps  
 **Status:** Approved
 
 ---
@@ -46,14 +46,26 @@ Body text size should bump to **14px** (from 13px) to compensate for Garamond's 
 
 `AlegreyaSC` remains the display font in both apps. It is already the shared visual backbone for headers, tab labels, section titles, and small-caps labels. No changes needed.
 
-### 5. Dark mode — no change
+### 5. Dark mode tokens — no change
 
-Both apps already share identical dark mode tokens. No changes needed.
+Both apps already share identical dark mode tokens. No token changes needed.
 
 ```
 --bg: #1c1a17   --surface: #252220   --surface2: #2e2b27
 --border: #3a3830   --text: #e0dbd4   --text-dim: #6a6460
 ```
+
+### 8. Dark mode architecture cleanup — dnd_character only
+
+dnd_character implements dark mode with ~80 explicit `[data-theme="dark"] .component` overrides that manually reassign colors per component. lodestar instead overrides only the 8 tokens in `:root` and lets `var()` references cascade automatically.
+
+The dnd_character approach is brittle: every new component requires a matching dark rule or it won't adapt. It also makes future token changes expensive — each change touches both the `:root` block and a long list of component overrides.
+
+**Fix:** Audit all `[data-theme="dark"]` component rules in `static/css/app.css`. For each rule:
+- If it only reassigns values already expressed via CSS variables (e.g. `border-color: var(--border)`), delete it — the variable already handles it.
+- If it hardcodes a specific color not covered by any token (e.g. `background: #1a2e1a` on a selected spell row), keep it — these are intentional per-component overrides.
+
+After cleanup, `[data-theme="dark"]` should contain only the 8 token overrides plus any genuinely component-specific exceptions. New components added in the future will automatically inherit correct dark mode colors without extra rules.
 
 ### 6. Saving throw labels — dnd_character only
 
@@ -109,6 +121,7 @@ The `.char-meta` line ("Bard · Creation · Level 3 · Noble") currently uses `1
 - Bump base body font-size from 13px to 14px where Lato was used
 - Fix `.save-box .save-name`: `font-family: var(--font-display)`, `font-size: 0.55rem`, `letter-spacing: 0.08em`, `text-transform: uppercase`
 - Fix `.char-meta`: `font-family: var(--font-body)`, `font-size: 12px`, remove `text-transform: uppercase`, `color: rgba(229, 223, 211, 0.65)`
+- Audit and remove redundant `[data-theme="dark"]` component overrides (keep only the 8 token overrides and genuine per-component exceptions)
 
 ### lodestar (`src/style.css`)
 - Update `--text` to `#2c2218`
@@ -122,5 +135,6 @@ The `.char-meta` line ("Bard · Creation · Level 3 · Noble") currently uses `1
 
 - Layout, spacing, or component structure changes
 - Any functional changes to either app
-- Dark mode token changes
+- Dark mode token changes (tokens are already unified)
 - AlegreyaSC font files or display font usage
+- Dark mode architecture in lodestar (already correct — token-only overrides)
