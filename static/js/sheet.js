@@ -570,9 +570,9 @@ function renderSpells(el) {
     ${Object.entries(slots).sort(([a],[b])=>+a-+b).map(([lvl, s]) => `
       <div class="spell-level-row">
         <div class="spell-level-label">Lv ${lvl}</div>
-        <div style="flex:1;text-align:center;font-size:15px;font-weight:700">${s.used}/${s.max}</div>
-        <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="freeSlot('${lvl}')">−</button>
-        <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="useSlot('${lvl}')">+</button>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:700">${s.max - s.used}/${s.max}</div>
+        <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="useSlot('${lvl}')">−</button>
+        <button class="hp-editor-btn" style="width:28px;height:28px;font-size:16px" onclick="freeSlot('${lvl}')">+</button>
         <button class="btn-icon" style="font-size:14px" onclick="restoreSlots('${lvl}')" title="Restore all">↺</button>
       </div>`).join('')}` : ''}
     ${!known.length ? '<div style="padding:24px;text-align:center;color:#888;font-size:13px">No known spells</div>' : ''}
