@@ -1144,6 +1144,7 @@ function renderSpellPickerResults() {
 
 window.addSpell = (key) => {
   if (!editMode) return;
+  if ((char.spells_known || []).includes(key)) return;
   const known = [...(char.spells_known || []), key];
   save({ spells_known: known }).then(() => renderActiveTab());
 };
