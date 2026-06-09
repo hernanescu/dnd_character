@@ -217,33 +217,29 @@ export async function initSheet(id) {
 
 function render() {
   const app = document.getElementById('app');
-  const hpPct = char.hp_current / char.hp_max;
   const tabs = getTabs();
   const clsName = char.class_key.charAt(0).toUpperCase() + char.class_key.slice(1);
   const acVal = computeAC();
   const ppVal = 10 + skillBonus('perception', 'wis');
+  const hpPct = char.hp_current / char.hp_max;
   app.innerHTML = `
     <div class="app-header">
-      <div>
+      <div style="flex:1;min-width:0">
         <button class="back-btn" style="padding:0 0 6px;color:#888" onclick="window.location='/'">‹ Characters</button>
-        <div class="char-name">${escHtml(char.name)}</div>
-        <div class="char-meta">${clsName} · ${char.subclass_key ? escHtml(char.subclass_key) : 'No Subclass'} · Level ${char.level} · ${escHtml(char.background_name)}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <div class="hp-badge" style="cursor:default" title="Armor Class">
-          <div class="hp-num">${acVal}</div>
-          <div class="hp-label">AC</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div class="char-name" style="flex-shrink:0">${escHtml(char.name)}</div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <div class="stat-pill" title="Armor Class"><span class="stat-pill-val">${acVal}</span> AC</div>
+            <div class="stat-pill" title="Passive Perception"><span class="stat-pill-val">${ppVal}</span> PP</div>
+            <div class="stat-pill stat-pill-hp" onclick="openHpEditor()" style="cursor:pointer" title="Hit Points">
+              <span class="stat-pill-val" style="${hpPct <= 0.3 ? 'color:#ff6b6b' : ''}">${char.hp_current}</span>
+              / ${char.hp_max} HP
+            </div>
+            <button class="icon-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">🌓</button>
+            <button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();deleteCurrentChar(${char.id},'${escHtml(char.name)}')" title="Delete character">✕</button>
+          </div>
         </div>
-        <div class="hp-badge" style="cursor:default" title="Passive Perception">
-          <div class="hp-num">${ppVal}</div>
-          <div class="hp-label">P. PER</div>
-        </div>
-        <div class="hp-badge" onclick="openHpEditor()">
-          <div class="hp-num${hpPct <= 0.3 ? ' hurt' : ''}">${char.hp_current}</div>
-          <div class="hp-label">/ ${char.hp_max} HP</div>
-        </div>
-        <button class="icon-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">🌓</button>
-        <button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();deleteCurrentChar(${char.id},'${escHtml(char.name)}')" title="Delete character">✕</button>
+        <div class="char-meta">${clsName}${char.subclass_key ? ` · ${escHtml(char.subclass_key)}` : ''} · Level ${char.level} · ${escHtml(char.background_name)}</div>
       </div>
     </div>
     <div class="resource-bar">

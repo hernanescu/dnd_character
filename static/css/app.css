@@ -100,6 +100,14 @@ body {
 .hp-num { font-size: 26px; font-weight: 700; line-height: 1; }
 .hp-num.hurt { color: #ff6b6b; }
 .hp-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-pill {
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;color:#aaa;letter-spacing:0.04em;
+  background:rgba(255,255,255,.08);border-radius:4px;
+  padding:3px 7px;line-height:1;
+}
+.stat-pill-val { font-size:14px;font-weight:700;color:#fff; }
+.stat-pill-hp { background:rgba(255,255,255,.12); }
 
 /* ── RESOURCE BAR ────────────────────────────────────────── */
 .resource-bar {
