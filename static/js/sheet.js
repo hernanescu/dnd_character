@@ -116,6 +116,29 @@ function computeAC() {
   ac += getEquippedBonuses().ac;
   return ac;
 }
+const ARMOR_COSTS = { leather: 10, studded: 45, chain_shirt: 50, scale_mail: 50, breastplate: 400, half_plate: 750, chain_mail: 75, splint: 200, plate: 1500 };
+
+const COMMON_ITEMS = [
+  ...ARMORS.filter(a => a.key !== 'none').map(a => ({ slug: `com-armor-${a.key}`, name: a.name, cost_gp: ARMOR_COSTS[a.key] || 0, base_armor_type: true })),
+  ...Object.entries(BASE_WEAPONS).map(([key, w]) => ({ slug: `com-weapon-${key}`, name: w.name, cost_gp: 0, base_weapon_type: true })),
+  { slug: 'com-backpack', name: 'Backpack', cost_gp: 2 },
+  { slug: 'com-bedroll', name: 'Bedroll', cost_gp: 1 },
+  { slug: 'com-candle', name: 'Candle', cost_gp: 0.01 },
+  { slug: 'com-rations', name: 'Rations (1 day)', cost_gp: 0.5 },
+  { slug: 'com-waterskin', name: 'Waterskin', cost_gp: 0.2 },
+  { slug: 'com-hempen-rope', name: 'Hempen Rope (50 ft)', cost_gp: 1 },
+  { slug: 'com-torch', name: 'Torch', cost_gp: 0.01 },
+  { slug: 'com-potion-healing', name: 'Potion of Healing', cost_gp: 50 },
+  { slug: 'com-arrows', name: 'Arrows (20)', cost_gp: 1 },
+  { slug: 'com-bolts', name: 'Bolts (20)', cost_gp: 1 },
+  { slug: 'com-holy-water', name: 'Holy Water (flask)', cost_gp: 25 },
+  { slug: 'com-alchemist-fire', name: "Alchemist's Fire (flask)", cost_gp: 50 },
+  { slug: 'com-manacles', name: 'Manacles', cost_gp: 2 },
+  { slug: 'com-thieves-tools', name: "Thieves' Tools", cost_gp: 25 },
+  { slug: 'com-healers-kit', name: "Healer's Kit", cost_gp: 5 },
+  { slug: 'com-component-pouch', name: 'Component Pouch', cost_gp: 25 },
+];
+
 const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
 const SPELLCASTING_ABILITY = { artificer: 'int', bard: 'cha', cleric: 'wis', druid: 'wis', paladin: 'cha', ranger: 'wis', sorcerer: 'cha', warlock: 'cha', wizard: 'int' };
 function getTabs() {
@@ -244,9 +267,8 @@ function renderStats(el) {
   const scores = char.ability_scores;
   const pb = profBonus(char.level);
   el.innerHTML = `
-    <div class="prof-info">
-      <span style="font-size:11px;color:#888">Proficiency Bonus: <b>${fmtBonus(pb)}</b></span>
-      <button class="btn btn-sm btn-outline edit-mode-toggle" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
     </div>
     <div class="section-title">Ability Scores</div>
     <div class="ability-grid">
@@ -281,6 +303,9 @@ function renderStats(el) {
         <div class="skill-bonus">${fmtBonus(bonus)}</div>
       </div>`;
     }).join('')}
+    <div class="prof-info" style="margin-top:12px">
+      <span style="font-size:11px;color:#888">Proficiency Bonus: <b>${fmtBonus(pb)}</b></span>
+    </div>
     ${renderBgCard()}
   `;
 }
@@ -737,9 +762,13 @@ function renderItemPickerResults() {
   const results = document.getElementById('ip-results');
   if (!results || !itemData) return;
 
-  const entries = Object.entries(itemData).filter(([, it]) =>
+  const magicEntries = Object.entries(itemData).filter(([, it]) =>
     !q || it.name.toLowerCase().includes(q)
-  ).sort((a, b) => a[1].name.localeCompare(b[1].name)).slice(0, 50);
+  );
+  const commonEntries = COMMON_ITEMS.filter(it =>
+    !q || it.name.toLowerCase().includes(q)
+  ).map(it => [it.slug, it]);
+  const entries = [...commonEntries, ...magicEntries].sort((a, b) => a[1].name.localeCompare(b[1].name)).slice(0, 50);
   results.innerHTML = entries.map(([slug, it]) => {
     const color = RARITY_COLORS[(it.rarity || '').toLowerCase()] || '#888';
     const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
@@ -777,8 +806,12 @@ window.toggleItemPicker = () => {
 
 window.filterItemPicker = () => renderItemPickerResults();
 
+function _itemBySlug(slug) {
+  return itemData?.[slug] || COMMON_ITEMS.find(c => c.slug === slug);
+}
+
 window.confirmBaseItem = (slug, prefixed, qty) => {
-  const it = itemData?.[slug];
+  const it = _itemBySlug(slug);
   if (!it) return;
   const isWeapon = prefixed.startsWith('w-');
   const baseKey = prefixed.slice(2);
@@ -795,7 +828,7 @@ window.confirmBaseItem = (slug, prefixed, qty) => {
 };
 
 window.addLibraryItem = (slug, qty) => {
-  const it = itemData?.[slug];
+  const it = _itemBySlug(slug);
   if (!it) return;
   const inventory = [...(char.inventory || []), { name: it.name, qty: qty || 1, slug, cost_gp: it.cost_gp }];
   save({ inventory }).then(() => renderActiveTab());
