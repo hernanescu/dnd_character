@@ -452,12 +452,12 @@ function renderCombat(el) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
       <div style="display:flex;align-items:center;gap:8px">
         <div class="inspiration-die">${inspirationDieByLevel(char.level)}</div>
-        <div style="font-size:12px;color:#555">${subclassName}</div>
+        <div style="font-size:12px;color:var(--gray-dark)">${subclassName}</div>
       </div>
-      <div style="display:flex;align-items:center;gap:4px">
+      <div style="display:flex;align-items:center;gap:6px">
         <button class="resource-btn" onclick="adjBardicInspiration(-1)">−</button>
         <div class="resource-val" id="res-bardic_inspiration">${char.bardic_inspiration ?? profBonus(char.level)}</div>
-        <span style="font-size:10px;color:#888">/ ${profBonus(char.level)}</span>
+        <span style="font-size:11px;color:var(--gray-mid)">/ ${profBonus(char.level)}</span>
         <button class="resource-btn" onclick="adjBardicInspiration(+1)">+</button>
       </div>
     </div>` : ''}

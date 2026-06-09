@@ -108,13 +108,13 @@ body {
 }
 .resource-item {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  padding: 6px 4px 5px; gap: 2px;
+  padding: 6px 2px 5px; gap: 2px;
   border-right: 1px solid var(--gray-light);
 }
 .resource-item:last-child { border-right: none; }
 .resource-label {
-  font-size: 7px; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--gray-mid); font-weight: 700;
+  font-size: 8px; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--gray-dark); font-weight: 700;
 }
 .resource-controls {
   display: flex; align-items: center; gap: 4px;
@@ -274,10 +274,9 @@ body {
 /* ── INSPIRATION DIE ────────────────────────────────────── */
 .inspiration-die {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 48px; height: 48px;
+  width: 44px; height: 44px;
   border: 2px solid var(--black); border-radius: 8px;
-  font-family: var(--font-heading); font-size: 16px; font-weight: 500;
-  cursor: pointer; margin-right: 8px;
+  font-family: var(--font-heading); font-size: 15px; font-weight: 500;
 }
 
 /* ── SPELL SLOTS ────────────────────────────────────────── */
