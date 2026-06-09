@@ -778,12 +778,15 @@ function renderStep5(body) {
   function spellRow(k, s, type, max, selected) {
     const dis = !selected && (type === 'cantrip' ? cantripSel : spellSel) >= max;
     const checked = selected ? '✓' : '';
+    const desc = s.description || '';
+    const shortDesc = desc ? escHtml(desc.substring(0, 100)) + (desc.length > 100 ? '…' : '') : '';
     return `<div class="spell-row${selected ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="${dis ? '' : `toggleSpell('${k}','${type}')`}">
       <div class="spell-row-check">${checked}</div>
       <div class="spell-row-level">${s.level === 0 ? 'C' : 'L' + s.level}</div>
       <div class="spell-row-name">${escHtml(s.name)}</div>
       <div class="spell-row-school">${escHtml(s.school || '')}</div>
-    </div>`;
+    </div>
+    ${selected && shortDesc ? `<div style="font-size:10px;color:#888;padding:2px 8px 6px 42px;line-height:1.4">${shortDesc}</div>` : ''}`;
   }
 
   body.innerHTML = `
