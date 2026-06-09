@@ -549,7 +549,7 @@ function renderSpells(el) {
   const slots = char.spell_slots || {};
   const allSpells = spellData || {};
   const known = char.spells_known || [];
-  const knownSpells = known.map(k => allSpells[k]).filter(Boolean);
+  const knownSpells = known.map(k => allSpells[k] ? { ...allSpells[k], _key: k } : null).filter(Boolean);
 
   const grouped = {};
   for (const s of knownSpells) {
@@ -560,6 +560,9 @@ function renderSpells(el) {
   const levels = Object.keys(grouped).sort((a, b) => +a - +b);
 
   el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button class="btn btn-sm btn-outline" onclick="toggleEdit()">${editMode ? '✓ Done' : '✏ Edit'}</button>
+    </div>
     <div class="spell-dc-bar">
       <div class="spell-dc-item"><div class="spell-dc-val">${spellDC}</div><div class="spell-dc-label">Spell DC</div></div>
       <div class="spell-dc-item"><div class="spell-dc-val">${fmtBonus(spellAtk)}</div><div class="spell-dc-label">Spell Atk</div></div>
@@ -604,11 +607,15 @@ function spellCard(s) {
   const levelLabel = s.level === 0 ? 'Cantrip' : `Lv ${s.level}`;
   const ritual = s.ritual ? ' <span class="spell-tag">R</span>' : '';
   const conc = s.concentration ? ' <span class="spell-tag">C</span>' : '';
+  const removeBtn = editMode && s._key
+    ? `<button class="delete-btn" onclick="event.stopPropagation();removeSpell('${s._key}')" title="Remove">×</button>`
+    : '';
   return `<div class="spell-card" onclick="this.classList.toggle('expanded')">
     <div class="spell-header">
       <span class="spell-level-badge">${levelLabel}</span>
       <span class="spell-name">${escHtml(s.name)}${ritual}${conc}</span>
       <span class="spell-school">${escHtml(s.school)}</span>
+      ${removeBtn}
     </div>
     <div class="spell-desc">${escHtml(s.description)}</div>
     <div class="spell-meta">
@@ -1099,6 +1106,11 @@ window.freeSlot = (level) => {
   slots[level].used--;
   save({ spell_slots: slots }).then(() => renderActiveTab());
   log('spell-slot', `Level ${level} slot freed: ${slots[level].used}/${slots[level].max}`);
+};
+
+window.removeSpell = (key) => {
+  const known = (char.spells_known || []).filter(k => k !== key);
+  save({ spells_known: known }).then(() => renderActiveTab());
 };
 
 window.toggleSkillProf = (skillKey) => {
