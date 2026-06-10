@@ -783,12 +783,13 @@ function renderInventory(el) {
           ${editMode ? `<button class="delete-btn" onclick="event.stopPropagation();removeItem(${i})" style="font-size:11px;flex-shrink:0">×</button>` : ''}
         </div>
         <div id="item-detail-${i}" class="spell-desc" style="display:none;padding-top:6px">
+          ${lib || item.base_weapon || item.base_armor ? `
           ${lib ? `
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px">
             <span style="color:${rColor};font-size:10px;font-weight:600">${escHtml(lib.rarity)}</span>
             <span style="color:#888;font-size:9px">${escHtml(lib.source)}</span>
             ${needsAt ? `<span style="font-size:8px;background:#555;color:#fff;padding:1px 5px;border-radius:8px">Requires Attunement</span>` : ''}
-          </div>
+          </div>` : ''}
           ${item.base_weapon && BASE_WEAPONS[item.base_weapon] ? `<div style="font-size:10px;color:#888;margin-bottom:3px">Base: ${escHtml(BASE_WEAPONS[item.base_weapon].name)} (${BASE_WEAPONS[item.base_weapon].die} ${BASE_WEAPONS[item.base_weapon].type})</div>` : ''}
           ${item.base_armor ? `<div style="font-size:10px;color:#888;margin-bottom:3px">Base: ${escHtml(ARMORS.find(a=>a.key===item.base_armor)?.name || item.base_armor)}</div>` : ''}
           ${bonusList.length ? `<div style="font-size:11px;margin-bottom:4px;color:${canBenefit ? 'var(--text)' : '#888'}">${bonusList.join(' · ')}</div>` : ''}
@@ -799,7 +800,7 @@ function renderInventory(el) {
             <span style="font-size:10px;color:${isEq ? '#4a4' : '#888'}">${isEq ? '● Equipped' : '○ Not equipped'}</span>`}
             ${needsAt ? `<span class="eq-btn ${isAt ? 'on' : ''}" onclick="toggleAttune(${i})" style="${editMode ? '' : 'font-size:10px;cursor:pointer;color:#888'}">${isAt ? '✦ Attuned' : '○ Attune'}</span>` : ''}
           </div>
-          ${lib.note ? `<div style="font-size:9px;color:#888;margin-top:4px;padding-top:3px;border-top:1px solid var(--gray-light)">Pricing: ${escHtml(lib.note)}</div>` : ''}
+          ${lib?.note ? `<div style="font-size:9px;color:#888;margin-top:4px;padding-top:3px;border-top:1px solid var(--gray-light)">Pricing: ${escHtml(lib.note)}</div>` : ''}
           ` : `<div style="color:#888;font-size:10px">No library data. <span style="color:#aaa">Add from library to link stats.</span></div>`}
         </div>
       </div>`;
@@ -847,11 +848,6 @@ function renderItemPickerResults() {
     const color = RARITY_COLORS[(it.rarity || '').toLowerCase()] || '#888';
     const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
     const has = (char.inventory || []).some(i => i.slug === slug);
-    const isWeapon = it.base_weapon_type;
-    const isArmor = it.base_armor_type;
-    const needsBase = isWeapon || isArmor;
-    const choices = needsBase ? (isWeapon ? Object.entries(BASE_WEAPONS) : ARMORS.filter(a => a.key !== 'none').map(a => [a.key, a])) : null;
-    const rowId = `ip-row-${slug}`;
     return `<div class="item-row" style="${has ? 'opacity:0.4' : 'cursor:pointer'}" ${has ? '' : `onclick="addLibraryItem('${slug}', parseInt(document.getElementById('ip-qty-${slug}')?.value || '1'))"`}>
       <div class="item-name" style="flex-wrap:wrap;gap:3px">
         <span style="display:inline-flex;align-items:center;gap:4px">
@@ -860,11 +856,6 @@ function renderItemPickerResults() {
           <span style="font-size:9px;color:#888">${escHtml(it.rarity || '')}</span>
         </span>
         ${!has ? `<span style="display:inline-flex;align-items:center;gap:2px;font-size:10px;color:#888">× <input id="ip-qty-${slug}" type="number" min="1" value="1" style="width:28px;padding:1px 2px;font-size:9px;border:1px solid var(--gray-light);border-radius:3px;background:var(--card-bg);color:var(--text);text-align:center" onclick="event.stopPropagation()"></span>` : '<span style="font-size:9px;color:#888">(owned)</span>'}
-        ${needsBase && !has ? `
-        <select style="font-size:9px;padding:1px 4px;border:1px solid var(--gray-light);border-radius:3px;background:var(--card-bg);color:var(--text);cursor:pointer" onclick="event.stopPropagation()" onchange="confirmBaseItem('${slug}','${isWeapon ? 'w-' : 'a-'}'+this.value, parseInt(document.getElementById('ip-qty-${slug}')?.value || '1'))">
-          <option value="">+ Select base...</option>
-          ${choices.map(([key, val]) => `<option value="${key}">${escHtml(val.name)}</option>`).join('')}
-        </select>` : ''}
       </div>
       <div class="item-qty">${cost}</div>
     </div>`;
@@ -884,27 +875,13 @@ function _itemBySlug(slug) {
   return itemData?.[slug] || COMMON_ITEMS.find(c => c.slug === slug);
 }
 
-window.confirmBaseItem = (slug, prefixed, qty) => {
-  const it = _itemBySlug(slug);
-  if (!it) return;
-  const isWeapon = prefixed.startsWith('w-');
-  const baseKey = prefixed.slice(2);
-  const baseData = isWeapon ? BASE_WEAPONS[baseKey] : ARMORS.find(a => a.key === baseKey);
-  if (!baseData) return;
-  const displayName = `${baseData.name}, ${it.name.replace(/^[WeaponArmor]+,\s*/, '')}`;
-  const entry = { name: displayName, qty: qty || 1, slug, cost_gp: it.cost_gp };
-  if (isWeapon) entry.base_weapon = baseKey;
-  else entry.base_armor = baseKey;
-  const inventory = [...(char.inventory || []), entry];
-  save({ inventory }).then(() => renderActiveTab());
-  document.getElementById('ip-search').value = '';
-  log('item', `Added library item: ${displayName} x${qty||1} (base: ${baseKey})`);
-};
-
 window.addLibraryItem = (slug, qty) => {
   const it = _itemBySlug(slug);
   if (!it) return;
-  const inventory = [...(char.inventory || []), { name: it.name, qty: qty || 1, slug, cost_gp: it.cost_gp }];
+  const entry = { name: it.name, qty: qty || 1, slug, cost_gp: it.cost_gp };
+  if (it.base_weapon_type) entry.base_weapon = slug.replace(/^com-weapon-/, '');
+  if (it.base_armor_type) entry.base_armor = slug.replace(/^com-armor-/, '');
+  const inventory = [...(char.inventory || []), entry];
   save({ inventory }).then(() => renderActiveTab());
   log('item', `Added library item: ${it.name} x${qty||1}`);
 };
