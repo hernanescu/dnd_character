@@ -984,9 +984,9 @@ function renderFeats(el) {
   }
   if (subclass) {
     html += `<div class="section-title">${escHtml(subclass.name)}</div>`;
-    html += `<div class="feat-card" onclick="this.classList.toggle('expanded')">
-      <div class="feat-name-row"><span class="feat-name">${escHtml(subclass.description || '')}</span></div>
-    </div>`;
+    if (subclass.description) {
+      html += `<div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:13px;line-height:1.65;margin-bottom:8px">${escHtml(subclass.description)}</div>`;
+    }
     for (let l = 1; l <= level; l++) {
       const feats = subFeatures[String(l)] || [];
       if (feats.length) {
