@@ -768,6 +768,8 @@ body {
 [data-theme="dark"] .builder-body { background: var(--bg); }
 [data-theme="dark"] .builder-nav { background: var(--surface2); border-color: var(--border); }
 [data-theme="dark"] .pill { background: var(--surface2); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .pill.selected { background: var(--text); color: var(--bg); border-color: var(--text); }
+[data-theme="dark"] .subclass-card.selected { background: var(--text); color: var(--bg); border-color: var(--text); }
 [data-theme="dark"] .ability-box { background: var(--surface2); border-color: var(--border); }
 [data-theme="dark"] .hp-editor-btn { border-color: var(--text); color: var(--text); background: var(--surface); }
 [data-theme="dark"] .skill-row { border-color: var(--border); }
