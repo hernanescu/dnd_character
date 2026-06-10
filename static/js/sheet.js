@@ -1,4 +1,5 @@
 import { api } from '/static/js/api.js';
+import { themeIcon } from '/static/js/icons.js';
 import {
   isAbilityToggleable,
   isRangedWeapon,
@@ -181,7 +182,7 @@ window.toggleTheme = () => {
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('dnd-theme', next);
   document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-    btn.textContent = next === 'dark' ? '☾' : '☀';
+    btn.innerHTML = themeIcon(next);
   });
 };
 
@@ -247,7 +248,7 @@ function render() {
               <span class="stat-pill-val" style="${hpPct <= 0.3 ? 'color:#ff6b6b' : ''}">${char.hp_current}</span>
               / ${char.hp_max} HP
             </div>
-            <button class="theme-toggle-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">${document.documentElement.getAttribute('data-theme')==='dark'?'☾':'☀'}</button>
+            <button class="theme-toggle-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">${themeIcon(document.documentElement.getAttribute('data-theme'))}</button>
             <button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();deleteCurrentChar(${char.id},'${escHtml(char.name)}')" title="Delete character">✕</button>
           </div>
         </div>

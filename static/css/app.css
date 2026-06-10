@@ -518,7 +518,6 @@ body {
 .empty-state {
   padding: 48px 24px; text-align: center;
 }
-.empty-state-icon { font-size: 40px; margin-bottom: 12px; }
 .empty-state-text { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; }
 
 /* ── BUILDER ────────────────────────────────────────────── */
@@ -791,7 +790,6 @@ body {
 [data-theme="dark"] .back-btn { color: var(--text-dim); }
 [data-theme="dark"] .resource-btn { border-color: var(--border); color: var(--text); }
 [data-theme="dark"] .slot-pip { background: var(--border); }
-[data-theme="dark"] .empty-state-icon { color: var(--border); }
 [data-theme="dark"] .dm-screen { background: var(--surface2); color: var(--text); }
 [data-theme="dark"] .stat-pill { background: rgba(255,255,255,0.08); }
 [data-theme="dark"] .stat-pill-hp { background: rgba(255,255,255,0.12); }
