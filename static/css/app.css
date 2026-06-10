@@ -329,9 +329,9 @@ body {
 }
 .spell-level-header:hover { background: var(--surface2); }
 .spell-level-arrow { font-size: 12px; color: var(--text-dim); width: 14px; }
-.spell-level-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; flex: 1; }
+.spell-level-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; flex: 1; }
 .spell-level-count {
-  font-size: 10px; color: var(--text-dim); background: var(--surface);
+  font-size: 11px; color: var(--text-dim); background: var(--surface);
   padding: 1px 7px; border-radius: 10px;
 }
 .spell-level-body { display: none; }
@@ -347,15 +347,15 @@ body {
   font-size: 9px; background: var(--text); color: var(--surface);
   padding: 2px 6px; border-radius: 10px; flex-shrink: 0;
 }
-.spell-name { font-size: 13px; font-weight: 700; flex: 1; }
-.spell-school { font-size: 10px; color: var(--text-dim); }
-.spell-desc { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.5; display: none; }
+.spell-name { font-size: 15px; font-weight: 700; flex: 1; }
+.spell-school { font-size: 12px; color: var(--text-dim); }
+.spell-desc { font-size: 15px; color: var(--text-dim); margin-top: 6px; line-height: 1.6; display: none; }
 .spell-card.expanded .spell-desc { display: block; }
 .spell-card.expanded .spell-meta { display: flex; }
 .spell-card.expanded .spell-higher { display: block; }
-.spell-meta { font-size: 10px; color: var(--text-dim); margin-top: 6px; gap: 4px 12px; flex-wrap: wrap; display: none; line-height: 1.6; }
+.spell-meta { font-size: 12px; color: var(--text-dim); margin-top: 6px; gap: 4px 12px; flex-wrap: wrap; display: none; line-height: 1.6; }
 .spell-tag { display: inline-block; font-size: 8px; background: var(--text-dim); color: var(--surface); padding: 1px 4px; border-radius: 3px; vertical-align: middle; margin-left: 2px; }
-.spell-higher { font-size: 11px; color: var(--text-dim); margin-top: 6px; line-height: 1.5; display: none; font-style: italic; }
+.spell-higher { font-size: 15px; color: var(--text-dim); margin-top: 6px; line-height: 1.6; display: none; font-style: italic; }
 .sp-result-row {
   display: flex; align-items: center; padding: 6px 8px;
   border-radius: var(--radius-sm); cursor: pointer;
@@ -638,7 +638,7 @@ body {
 .spell-progress {
   display: flex;
   gap: 16px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--text-dim);
   margin-bottom: 10px;
 }
@@ -736,7 +736,7 @@ body {
   line-height: 1;
 }
 .spell-row-level {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-dim);
   width: 20px;
@@ -745,10 +745,10 @@ body {
 }
 .spell-row-name {
   flex: 1;
-  font-size: 14px;
+  font-size: 15px;
 }
 .spell-row-school {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-faint);
   flex-shrink: 0;
 }
