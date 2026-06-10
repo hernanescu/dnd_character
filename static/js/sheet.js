@@ -357,7 +357,7 @@ function renderBgCard() {
   return `
     <div class="section-title" style="margin-top:16px">Background: ${escHtml(bg.name)}</div>
     <div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
-      ${bg.description ? `<div style="font-size:13px;line-height:1.65;margin-bottom:6px">${escHtml(bg.description)}</div>` : ''}
+      ${bg.description ? `<div style="font-size:15px;line-height:1.6;margin-bottom:6px">${escHtml(bg.description)}</div>` : ''}
       ${skills.length ? `<div style="margin-bottom:2px"><span style="color:#888">Skills:</span> <b>${escHtml(skills.join(', '))}</b></div>` : ''}
       ${tools.length ? `<div style="margin-bottom:2px"><span style="color:#888">Tools:</span> ${escHtml(tools.join(', '))}</div>` : ''}
       ${langs ? `<div style="margin-bottom:2px"><span style="color:#888">Languages:</span> +${langs} of choice</div>` : ''}
@@ -398,7 +398,7 @@ function renderCombat(el) {
     return `<div class="weapon-row">
       <div>
         <div class="weapon-name">${label}</div>
-        <div style="font-size:10px;color:#888">${typeLine}</div>
+        <div style="font-size:12px;color:var(--text-dim)">${typeLine}</div>
       </div>
       <div class="weapon-atk">${atkBonus}</div>
       <div class="weapon-dmg">${dmg}</div>
@@ -439,7 +439,7 @@ function renderCombat(el) {
     return `<div class="weapon-row">
       <div>
         <div class="weapon-name">${escHtml(it.name)}${eqBadge}<span style="font-size:9px;color:#4a4;margin-left:2px">equipped</span></div>
-        <div style="font-size:10px;color:#888">${typeLine}</div>
+        <div style="font-size:12px;color:var(--text-dim)">${typeLine}</div>
       </div>
       <div class="weapon-col">
         <div class="weapon-atk">${atk}${abilityToggle}</div>
@@ -985,7 +985,7 @@ function renderFeats(el) {
   if (subclass) {
     html += `<div class="section-title">${escHtml(subclass.name)}</div>`;
     if (subclass.description) {
-      html += `<div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:13px;line-height:1.65;margin-bottom:8px">${escHtml(subclass.description)}</div>`;
+      html += `<div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:15px;line-height:1.6;margin-bottom:8px">${escHtml(subclass.description)}</div>`;
     }
     for (let l = 1; l <= level; l++) {
       const feats = subFeatures[String(l)] || [];
