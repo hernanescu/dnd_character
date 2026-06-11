@@ -4,6 +4,7 @@ import {
   ABILITY_NAMES, ABILITY_FULL, SPELLCASTING_ABILITY, RARITY_COLORS,
   abilityMod, fmtBonus, escHtml, ordinalLabel, log,
 } from '/static/js/utils.js';
+import { maxPreparedSpells, cantripsKnown, maxSpellLevel } from '/static/js/spell-rules.js';
 
 const CLASSES = [
   { key: 'artificer', name: 'Artificer' },
@@ -759,6 +760,24 @@ function renderStep4(body) {
   `;
 }
 
+function builderCastingMod() {
+  const race = RACES.find(r => r.key === state.race);
+  const asi = race ? race.asi : {};
+  const castingAb = state.classData.spellcasting_ability || SPELLCASTING_ABILITY[state.classKey];
+  const flex = race?.flexAsi;
+  const flexBonus = flex ? state.flexAsiChoices.filter(x => x === castingAb).length * flex.points : 0;
+  const score = (state.abilityAssign[castingAb] || 10) + (asi[castingAb] || 0) + flexBonus;
+  return { castingAb, castingMod: abilityMod(score) };
+}
+
+function builderSpellLimits() {
+  const { castingMod } = builderCastingMod();
+  return {
+    cantripsMax: cantripsKnown(state.classData, state.level),
+    spellsMax: maxPreparedSpells(state.classKey, state.classData, state.level, castingMod),
+  };
+}
+
 function renderStep5(body) {
   const allSpells = state.spellData || {};
   const nSpells = Object.keys(allSpells).length;
@@ -770,11 +789,35 @@ function renderStep5(body) {
     `;
     return;
   }
-  const cantripsMax = cantripsAtLevel(state.level);
-  const spellsMax = state.classData.spells_known_by_level[String(state.level)] || 0;
+  const { cantripsMax, spellsMax } = builderSpellLimits();
+  const { castingAb, castingMod } = builderCastingMod();
+  const profBonus = Math.floor((state.level - 1) / 4) + 2;
+  const spellDC = 8 + profBonus + castingMod;
+  const spellAtk = profBonus + castingMod;
+
+  body.innerHTML = `
+    <div class="step-title">Spells</div>
+    <div class="step-sub">Choose <strong>${cantripsMax} cantrips</strong> and <strong>${spellsMax} spells</strong>.</div>
+    <div style="display:flex;gap:16px;padding:8px 10px;background:#f5f5f5;border-radius:4px;margin-bottom:12px;font-size:11px">
+      <div><span style="font-weight:700;font-size:16px">${spellDC}</span><br><span style="color:#888;font-size:9px">SPELL DC</span></div>
+      <div><span style="font-weight:700;font-size:16px">${fmtBonus(spellAtk)}</span><br><span style="color:#888;font-size:9px">SPELL ATK</span></div>
+      <div><span style="font-weight:700;font-size:16px">${fmtBonus(castingMod)}</span><br><span style="color:#888;font-size:9px">${ABILITY_NAMES[castingAb]} MOD</span></div>
+    </div>
+    <input class="input-field" style="width:100%;margin-bottom:10px" placeholder="Search spells..." value="${escHtml(state.spellFilter)}" oninput="filterSpells(this.value)">
+    <div id="spell-list-region"></div>
+  `;
+  renderSpellListRegion();
+}
+
+function renderSpellListRegion() {
+  const region = document.getElementById('spell-list-region');
+  if (!region) return;
+  const allSpells = state.spellData || {};
+  const { cantripsMax, spellsMax } = builderSpellLimits();
+  const maxLvl = maxSpellLevel(state.classKey, state.classData, state.level);
   const filter = (state.spellFilter || '').toLowerCase();
   const allEntries = Object.entries(allSpells).filter(([, s]) =>
-    s.level <= Math.ceil(state.level / 2) && (!filter || s.name.toLowerCase().includes(filter))
+    s.level <= maxLvl && (!filter || s.name.toLowerCase().includes(filter))
   );
 
   const grouped = {};
@@ -784,16 +827,6 @@ function renderStep5(body) {
     grouped[key].push([k, s]);
   }
   const levels = Object.keys(grouped).sort((a, b) => +a - +b);
-  const hasCantrips = grouped[0] && grouped[0].length > 0;
-
-  const profBonus = Math.floor((state.level - 1) / 4) + 2;
-  const race = RACES.find(r => r.key === state.race);
-  const asi = race ? race.asi : {};
-  const castingAb = state.classData.spellcasting_ability || SPELLCASTING_ABILITY[state.classKey];
-  const castingScore = (state.abilityAssign[castingAb] || 10) + (asi[castingAb] || 0);
-  const castingMod = abilityMod(castingScore);
-  const spellDC = 8 + profBonus + castingMod;
-  const spellAtk = profBonus + castingMod;
 
   const cantripSel = state.cantrips.length;
   const spellSel = state.spells.length;
@@ -812,15 +845,7 @@ function renderStep5(body) {
     ${selected && shortDesc ? `<div style="font-size:10px;color:#888;padding:2px 8px 6px 42px;line-height:1.4">${shortDesc}</div>` : ''}`;
   }
 
-  body.innerHTML = `
-    <div class="step-title">Spells</div>
-    <div class="step-sub">Choose <strong>${cantripsMax} cantrips</strong> and <strong>${spellsMax} spells</strong>.</div>
-    <div style="display:flex;gap:16px;padding:8px 10px;background:#f5f5f5;border-radius:4px;margin-bottom:12px;font-size:11px">
-      <div><span style="font-weight:700;font-size:16px">${spellDC}</span><br><span style="color:#888;font-size:9px">SPELL DC</span></div>
-      <div><span style="font-weight:700;font-size:16px">${fmtBonus(spellAtk)}</span><br><span style="color:#888;font-size:9px">SPELL ATK</span></div>
-      <div><span style="font-weight:700;font-size:16px">${fmtBonus(castingMod)}</span><br><span style="color:#888;font-size:9px">${ABILITY_NAMES[castingAb]} MOD</span></div>
-    </div>
-    <input class="input-field" style="width:100%;margin-bottom:10px" placeholder="Search spells..." value="${escHtml(state.spellFilter)}" oninput="filterSpells(this.value)">
+  region.innerHTML = `
     <div class="spell-progress">
       <span>Cantrips: ${cantripSel}/${cantripsMax}</span>
       <span>Spells: ${spellSel}/${spellsMax}</span>
@@ -829,7 +854,6 @@ function renderStep5(body) {
       const spells = grouped[lvl];
       const label = lvl == 0 ? 'Cantrips' : ordinalLabel(lvl);
       const max = lvl == 0 ? cantripsMax : spellsMax;
-      const sel = lvl == 0 ? cantripSel : spellSel;
       return `
       <div class="spell-group">
         <div class="spell-group-header">
@@ -840,11 +864,6 @@ function renderStep5(body) {
       </div>`;
     }).join('')}
   `;
-}
-
-function cantripsAtLevel(lvl) {
-  const table = { 1:2, 4:3, 10:4 };
-  return table[Math.max(...Object.keys(table).map(Number).filter(k => k <= lvl))] || 2;
 }
 
 function roll4d6() {
@@ -935,14 +954,15 @@ window.rollAll = () => {
   for (const ab of ABILITIES) state.abilityAssign[ab] = roll4d6();
   renderStep();
 };
-window.filterSpells = (val) => { state.spellFilter = val; renderStep(); };
+window.filterSpells = (val) => { state.spellFilter = val; renderSpellListRegion(); };
 window.toggleSpell = (k, type) => {
+  const { cantripsMax, spellsMax } = builderSpellLimits();
   const arr = type === 'cantrip' ? state.cantrips : state.spells;
-  const max = type === 'cantrip' ? cantripsAtLevel(state.level) : (state.classData.spells_known_by_level[String(state.level)] || 0);
+  const max = type === 'cantrip' ? cantripsMax : spellsMax;
   const i = arr.indexOf(k);
   if (i >= 0) arr.splice(i, 1);
   else if (arr.length < max) arr.push(k);
-  renderStep();
+  renderSpellListRegion();
 };
 
 window.finishBuilder = async () => {
