@@ -2,49 +2,59 @@
 
 ## Stack
 Flask + SQLite, no ORM. Vanilla JS ES modules, no build step. SPA with `?view=new` / `?view=sheet&id=N`.
-- `src/app.py` — backend + REST API
+- `src/app.py` — backend + REST API (per-user auth, ownership, JSON cache, gzip)
 - `static/js/builder.js` — 5-step character creation wizard
-- `static/js/sheet.js` — 6-tab character sheet (tabs: Stats, Combat, Spells, Inventory, Feats, Notes)
-- `data/classes/*.json` — 13 classes scraped from dnd5e.wikidot.com (English)
-- `data/backgrounds.json` — 88 backgrounds (scraped, English)
+- `static/js/sheet.js` — 6-tab character sheet (Stats, Combat, Spells, Inventory, Feats, World)
+- `static/js/utils.js` — shared helpers (escHtml, abilityMod, log, theme, constants)
+- `static/js/spell-rules.js` — pure spell-count rules (tested in `scripts/test_spell_rules.mjs`)
+- `data/classes/*.json` — 13 classes scraped from dnd5e.wikidot.com
+- `data/backgrounds.json` — 93 backgrounds
 
-## Completed
-- Translatated all UI labels from Spanish to English (SKILLS array, stat labels, builder labels, feats, inventory edit buttons)
-- Scraped all 13 classes from dnd5e.wikidot.com with features, subclasses, and spells
-- Added Ironsworn resource bar (momentum, supply, stress) with +/- controls
-- Refactored sheet to be class-agnostic: dynamic tabs (Spells hidden for non-casters), dynamic spellcasting ability, conditional Bardic Inspiration
-- Refactored builder to use class selector (step 1), dynamic step count (4 for non-casters / 5 for casters)
-- Builder loads class data dynamically on class selection (no hardcoded `bard`)
-- Spell grouping by level with expand/collapse in sheet
-- Compact spell slot pip layout (14px square, 3px gap)
-- Spell search/filter input in builder step 5
-- Responsive media queries (<360px, >768px)
-- Added `SPELLCASTING_ABILITY` fallback map for scraped data that lacks `spellcasting_ability` field
+## Tests
+- Backend: `python3 -m pytest tests/ -q` (auth, ownership, whitelist, cache)
+- Pure JS: `node scripts/test_spell_rules.mjs`, `node scripts/test_combat_utils.mjs`
+- Browser (server must run on :5000): `node scripts/test_choices.mjs`, `node scripts/test_combat_display.mjs`
+- `scripts/test_fixes.mjs` is a stale scratch script (assumes character id=1) — delete or rewrite.
+
+## Accounts (new)
+- Users live in the `users` table, passwords hashed. No self-registration.
+- Create a friend's account: `flask --app src/app.py create-user <name>` (prompts for password).
+- Characters belong to the creating user; friends only see their own.
+- **TODO: change hernan's password** — the old one is in git history. Same command updates it.
+
+## Deploy notes (Jetson)
+- `pip install -r requirements.txt` (adds `flask-compress` for gzip; app runs without it too).
+- Debug is now OFF by default (`FLASK_DEBUG=1` only for local dev).
+- After first deploy of this version the DB self-migrates (new columns); existing characters were claimed by `hernan`.
 
 ## Pending tasks
 
-### 1. Subclass data gaps
-Some classes have 0 subclasses in scraped data (cleric, barbarian, fighter, monk, rogue, artificer). Wikidot may not have dedicated pages. Options:
-- Parse class page directly for subclass mentions instead of following subclass links
-- Add manual subclass data
-- Allow manual entry in builder step 4
+### 1. Ranger/warlock data — DONE 2026-06-11
+Ranger re-scraped (8 subclasses), warlock pact-magic slots parse now (`Spell Slots` + `Slot Level` columns). `scrape_class.py` preserves `feature_choices` across re-scrapes.
 
-### 2. Warlock pact magic
-Warlock shows `spell_slots_by_level: {}` for all levels — pact magic uses a different slot mechanic. Need to handle separately or special-case.
+### 2. Remaining scraping (the "fetch content" backlog)
+- Class feature descriptions exist but are sparse for some classes (wizard 7, sorcerer 8, cleric 9) — could scrape feature detail pages.
+- If re-scraping spells, note the skip-guard: spells with a `components` field are never re-fetched; add a `--force` flag if descriptions need refreshing.
 
-### 3. Class feature descriptions
-Features are currently plain text names (`features_by_level`). No descriptions. Could scrape feature detail pages for richer display.
+### 3. Warlock sheet UX
+Pact slots now stored like normal slots (e.g. level 5 → `{"3": 2}`). Sheet renders them, but all pact slots refresh on a *short* rest — consider a "short rest" restore button.
 
-### 4. Spell description quality
-Some spell descriptions are truncated (500 char cap in scraper). Consider raising limit or scraping from a better source.
+### 4. Snapshot / restore tool
+Button to save current HP/resource state as a snapshot and restore later.
 
-### 5. Snapshot / restore tool
-A button to save the current HP/resource state as a "snapshot" and restore it later — useful for tracking resource use across sessions.
+### 5. Speed hardcoded
+Combat tab shows "30 ft" always; races define `speed` but it isn't persisted on the character.
 
 ## How to run
 ```bash
-python3 src/app.py          # starts on :5000
+python3 src/app.py          # starts on :5000, debug off
+FLASK_DEBUG=1 python3 src/app.py   # dev mode
 ```
 
-## Key gotcha
-`initBuilder()` in `builder.js` reassigns `state = {}` — must also do `window.state = state` right after, otherwise inline `oninput` handlers update a stale reference and inputs get wiped on re-render.
+## Key gotchas
+- `initBuilder()` in `builder.js` reassigns `state = {}` — must also do `window.state = state` right after, otherwise inline `oninput` handlers update a stale reference and inputs get wiped on re-render.
+- Character PUT only accepts whitelisted fields (`_JSON_FIELDS` + `_SCALAR_FIELDS` in app.py); adding a new persisted field needs a column + whitelist entry.
+- Inline `onclick` handlers must pass user strings via `data-*` attributes (apostrophes break quoted JS args; `escHtml` can't help there).
+
+## Review
+Full findings: `docs/code-review-2026-06-11.md`.
