@@ -45,3 +45,15 @@ def test_lucky_points_and_bardic_inspiration_persist(client):
     assert r.status_code == 200
     got = client.get(f'/api/characters/{cid}').get_json()
     assert got['lucky_points'] == 1 and got['bardic_inspiration'] == 2
+
+
+def test_data_endpoints_require_login(client):
+    for path in ('/api/spells', '/api/items', '/api/backgrounds', '/api/classes/bard'):
+        assert client.get(path).status_code == 401, path
+    assert client.post('/api/log', json={}).status_code == 401
+
+
+def test_spells_filter_by_class(client):
+    login(client)
+    assert 'cure-wounds' in client.get('/api/spells?class=cleric').get_json()
+    assert client.get('/api/spells?class=wizard').get_json() == {}

@@ -208,6 +208,7 @@ def health():
 
 
 @app.route('/api/classes/<key>')
+@login_required
 def get_class(key):
     path = os.path.join(_data_dir(), 'classes', f'{key}.json')
     if not os.path.isfile(path):
@@ -217,6 +218,7 @@ def get_class(key):
 
 
 @app.route('/api/spells')
+@login_required
 def get_spells():
     class_filter = request.args.get('class', '').strip().lower()
     path = os.path.join(_data_dir(), 'spells.json')
@@ -230,6 +232,7 @@ def get_spells():
 
 
 @app.route('/api/items')
+@login_required
 def get_items():
     source = request.args.get('source', '').strip().lower()
     rarity = request.args.get('rarity', '').strip().lower()
@@ -249,6 +252,7 @@ def get_items():
 
 
 @app.route('/api/backgrounds')
+@login_required
 def get_backgrounds():
     path = os.path.join(_data_dir(), 'backgrounds.json')
     if not os.path.isfile(path):
@@ -350,10 +354,13 @@ def delete_character(char_id):
 
 
 @app.route('/api/log', methods=['POST'])
+@login_required
 def api_log():
     data = request.get_json(silent=True) or {}
     log_path = os.path.join(BASE_DIR, 'data', 'app.log')
     try:
+        if os.path.exists(log_path) and os.path.getsize(log_path) > 1_000_000:
+            os.replace(log_path, log_path + '.1')
         ts = data.get('t', '')
         cat = data.get('c', '?')
         msg = data.get('m', '')
@@ -371,5 +378,5 @@ if __name__ == '__main__':
     with app.app_context():
         init_db()
     port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_DEBUG', '1') == '1'
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
     app.run(host='0.0.0.0', port=port, debug=debug)
