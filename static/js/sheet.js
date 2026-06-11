@@ -157,6 +157,7 @@ function getTabs() {
 
 let char = null;
 let classData = null;
+let raceData = null;
 let spellData = null;
 let bgData = null;
 let itemData = null;
@@ -195,9 +196,11 @@ export async function initSheet(id) {
   app.innerHTML = `<div style="padding:24px;text-align:center;color:#888">Loading...</div>`;
   try {
     const charData = await api.getCharacter(id);
-    [char, classData, spellData, bgData, itemData] = await Promise.all([
-      charData, api.getClass(charData.class_key), api.getSpells(charData.class_key), api.getBackgrounds(), api.getItems(),
+    let racesData;
+    [char, classData, spellData, bgData, itemData, racesData] = await Promise.all([
+      charData, api.getClass(charData.class_key), api.getSpells(charData.class_key), api.getBackgrounds(), api.getItems(), api.getRaces(),
     ]);
+    raceData = racesData[char.race] || null;
     char.background_name = (bgData[char.background] || {}).name || char.background;
     char.lucky_points = char.lucky_points ?? 3;
     char.expertise = char.expertise ?? [];
@@ -255,7 +258,7 @@ function render() {
             <button class="icon-btn icon-btn-danger" data-name="${escHtml(char.name)}" onclick="event.stopPropagation();deleteCurrentChar(${char.id}, this.dataset.name)" title="Delete character">✕</button>
           </div>
         </div>
-        <div class="char-meta">${clsName}${char.subclass_key ? ` · ${escHtml(char.subclass_key)}` : ''} · Level ${char.level} · ${escHtml(char.background_name)}</div>
+        <div class="char-meta">${raceData ? `${escHtml(raceData.name)} ` : ''}${clsName}${char.subclass_key ? ` · ${escHtml(char.subclass_key)}` : ''} · Level ${char.level} · ${escHtml(char.background_name)}</div>
       </div>
     </div>
     <div class="resource-bar">
@@ -459,7 +462,7 @@ function renderCombat(el) {
     <div class="combat-grid">
       <div class="stat-box"><div class="stat-val">${computeAC()}</div><div class="stat-label">AC</div></div>
       <div class="stat-box"><div class="stat-val">${fmtBonus(dexMod)}</div><div class="stat-label">Initiative</div></div>
-      <div class="stat-box"><div class="stat-val">30 ft</div><div class="stat-label">Speed</div></div>
+      <div class="stat-box"><div class="stat-val">${raceData?.speed ?? 30} ft</div><div class="stat-label">Speed</div></div>
       <div class="stat-box"><div class="stat-val">${fmtBonus(pb)}</div><div class="stat-label">Prof Bonus</div></div>
       <div class="stat-box"><div class="stat-val">${char.hp_max}</div><div class="stat-label">Max HP</div></div>
       <div class="stat-box"><div class="stat-val">${fmtBonus(conMod)}</div><div class="stat-label">Con Mod</div></div>
@@ -986,6 +989,11 @@ function renderFeats(el) {
   const subChoices = subclass?.feature_choices || {};
   const allChoices = { ...clsChoices, ...subChoices };
   html += renderChoiceSection(allChoices);
+
+  if (raceData?.traits?.length) {
+    html += `<div class="section-title">${escHtml(raceData.name)} Traits</div>`;
+    html += raceData.traits.map(t => featHtml(t.name, t.desc)).join('');
+  }
 
   if (manualFeats.length) {
     html += `<div class="section-title">Additional Features</div>`;

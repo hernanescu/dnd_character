@@ -22,82 +22,10 @@ const CLASSES = [
   { key: 'wizard',    name: 'Wizard' },
 ];
 
-const RACES = [
-  {
-    key:'human', name:'Human', speed:30, size:'Medium',
-    asi:{ str:1,dex:1,con:1,int:1,wis:1,cha:1 },
-    desc:'Versatile and ambitious. +1 to every ability score.',
-    traits:['Extra Language','Extra Skill (variant)'],
-  },
-  {
-    key:'elf_high', name:'High Elf', speed:30, size:'Medium',
-    asi:{ dex:2,int:1 },
-    desc:'Scholarly elves with a gift for magic. DEX +2, INT +1.',
-    traits:['Darkvision 60ft','Fey Ancestry','Trance','Cantrip (INT-based)','Extra Language'],
-  },
-  {
-    key:'elf_wood', name:'Wood Elf', speed:35, size:'Medium',
-    asi:{ dex:2,wis:1 },
-    desc:'Swift forest dwellers with keen senses. DEX +2, WIS +1.',
-    traits:['Darkvision 60ft','Fey Ancestry','Trance','Speed 35ft','Mask of the Wild'],
-  },
-  {
-    key:'drow', name:'Drow', speed:30, size:'Medium',
-    asi:{ dex:2,cha:1 },
-    desc:'Dark elves of the Underdark with innate magic. DEX +2, CHA +1.',
-    traits:['Superior Darkvision 120ft','Sunlight Sensitivity','Fey Ancestry','Dancing Lights / Faerie Fire / Darkness'],
-  },
-  {
-    key:'dwarf_hill', name:'Hill Dwarf', speed:25, size:'Medium',
-    asi:{ con:2,wis:1 },
-    desc:'Wise and hardy. CON +2, WIS +1, +1 HP per level.',
-    traits:['Darkvision 60ft','Poison Resilience (adv. + resistance)','Stonecunning','Dwarven Toughness (+1 HP/level)'],
-  },
-  {
-    key:'dwarf_mtn', name:'Mountain Dwarf', speed:25, size:'Medium',
-    asi:{ str:2,con:2 },
-    desc:'Strong mountain warriors. STR +2, CON +2.',
-    traits:['Darkvision 60ft','Poison Resilience','Stonecunning','Armor Training (light & medium)'],
-  },
-  {
-    key:'halfling', name:'Halfling', speed:25, size:'Small',
-    asi:{ dex:2,cha:1 },
-    desc:'Lucky and stealthy lightfoot halflings. DEX +2, CHA +1.',
-    traits:['Lucky (reroll 1s on d20)','Brave (adv. vs. fear)','Halfling Nimbleness','Naturally Stealthy'],
-  },
-  {
-    key:'half_elf', name:'Half-Elf', speed:30, size:'Medium',
-    asi:{ cha:2 },
-    flexAsi:{ count:2, points:1, exclude:['cha'] },
-    bonusSkills:{ count:2 },
-    desc:'CHA +2, then +1 to two other ability scores of your choice. 2 bonus skill proficiencies.',
-    traits:['Darkvision 60ft','Fey Ancestry','Skill Versatility (2 skills)','Extra Language'],
-  },
-  {
-    key:'half_orc', name:'Half-Orc', speed:30, size:'Medium',
-    asi:{ str:2,con:1 },
-    desc:'Fierce and resilient. STR +2, CON +1.',
-    traits:['Darkvision 60ft','Intimidation proficiency','Relentless Endurance (1 HP once/rest)','Savage Attacks (extra crit die)'],
-  },
-  {
-    key:'gnome', name:'Gnome', speed:25, size:'Small',
-    asi:{ int:2,con:1 },
-    desc:'Clever forest gnomes with illusion magic. INT +2, CON +1.',
-    traits:['Darkvision 60ft','Gnome Cunning (adv. on INT/WIS/CHA saves vs. magic)','Minor Illusion cantrip','Speak with small beasts'],
-  },
-  {
-    key:'tiefling', name:'Tiefling', speed:30, size:'Medium',
-    asi:{ cha:2,int:1 },
-    desc:'Fiend-touched with innate dark magic. CHA +2, INT +1.',
-    traits:['Darkvision 60ft','Fire Resistance','Thaumaturgy / Hellish Rebuke / Darkness (innate)'],
-  },
-  {
-    key:'dragonborn', name:'Dragonborn', speed:30, size:'Medium',
-    asi:{ str:2,cha:1 },
-    desc:'Proud dragon-kin with a breath weapon. STR +2, CHA +1.',
-    traits:['Draconic Ancestry (choose dragon type at creation)','Breath Weapon (action, Dex/Con save)','Damage Resistance (matching ancestry)'],
-  },
-];
+// Loaded from /api/races (scraped from dnd5e.wikidot.com lineage pages).
+// Entries: { key, name, category, desc, size, speed, asi, flexAsi,
+//            flexible_asi, traits:[{name,desc}], skills, bonusSkills }
+let RACES = [];
 
 // Background source categories
 const BG_SOURCES = {
@@ -407,13 +335,16 @@ export async function initBuilder() {
     abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
     abilityMode: 'array',
     background: '', bgFilter: 'all', classSkills: [], racialSkills: [], expertise: [], subclass: '', choices: {}, flexAsiChoices: [],
+    flexMode: '21', flexPlus2: null, flexPlus1: null,
     cantrips: [], spells: [], classData: null, backgroundsData: null, spellData: null, spellFilter: '',
   };
   window.state = state;
   try {
-    [state.classData, state.backgroundsData, state.spellData] = await Promise.all([
-      api.getClass(state.classKey), api.getBackgrounds(), api.getSpells(state.classKey),
+    let racesData;
+    [state.classData, state.backgroundsData, state.spellData, racesData] = await Promise.all([
+      api.getClass(state.classKey), api.getBackgrounds(), api.getSpells(state.classKey), api.getRaces(),
     ]);
+    RACES = Object.entries(racesData).map(([key, r]) => ({ key, ...r }));
   } catch (e) {
     document.getElementById('app').innerHTML = `<div style="padding:24px;color:#888">Error loading data</div>`;
     return;
@@ -467,10 +398,39 @@ function _renderStep() {
   renderNav(nav);
 }
 
+function currentRace() {
+  return RACES.find(r => r.key === state.race);
+}
+
+// Total racial ability bonus for one ability, combining fixed ASI, the
+// half-elf-style flexAsi picks, and the MPMM "+2/+1 or +1/+1/+1" choice.
+function racialBonusFor(ab) {
+  const race = currentRace();
+  if (!race) return 0;
+  let b = race.asi?.[ab] || 0;
+  if (race.flexAsi && state.flexAsiChoices.includes(ab)) b += race.flexAsi.points;
+  if (race.flexible_asi) {
+    if (state.flexMode === '111') b += state.flexAsiChoices.includes(ab) ? 1 : 0;
+    else b += (state.flexPlus2 === ab ? 2 : 0) + (state.flexPlus1 === ab ? 1 : 0);
+  }
+  return b;
+}
+
+function raceAsiSummary(race) {
+  if (race.flexible_asi) return '+2 and +1 (or +1/+1/+1) to abilities of your choice (Step 2)';
+  const fixed = Object.entries(race.asi || {}).map(([a, v]) => `${ABILITY_NAMES[a]} +${v}`).join(', ');
+  const flexNote = race.flexAsi ? ` + pick ${race.flexAsi.count}×+${race.flexAsi.points} (Step 2)` : '';
+  return fixed + flexNote;
+}
+
+function racePills(list) {
+  return `<div class="pills">${list.map(r => `<div class="pill${state.race === r.key ? ' selected' : ''}" onclick="selectRace('${r.key}')">${escHtml(r.name)}</div>`).join('')}</div>`;
+}
+
 function renderStep1(body) {
-  const selRace = RACES.find(r => r.key === state.race);
-  const asiStr = selRace ? Object.entries({ ...(selRace.asi||{})} ).map(([a,v])=>`${ABILITY_NAMES[a]} +${v}`).join(', ') : '';
-  const flexNote = selRace?.flexAsi ? ` + pick ${selRace.flexAsi.count}×+${selRace.flexAsi.points} (Step 2)` : '';
+  const selRace = currentRace();
+  const common = RACES.filter(r => r.category === 'common');
+  const exotic = RACES.filter(r => r.category === 'exotic');
   body.innerHTML = `
     <div class="step-title">Basic Info</div>
     <div class="step-sub">Your character's name, class, level, and race.</div>
@@ -481,14 +441,17 @@ function renderStep1(body) {
     <div class="field-label" style="margin-top:12px">Level</div>
     <div class="pills">${LEVEL_RANGE.map(l => `<div class="pill${state.level === l ? ' selected' : ''}" onclick="selectLevel(${l})">${l}</div>`).join('')}</div>
     <div class="field-label" style="margin-top:12px">Race</div>
-    <div class="pills">${RACES.map(r => `<div class="pill${state.race === r.key ? ' selected' : ''}" onclick="selectRace('${r.key}')">${r.name}</div>`).join('')}</div>
+    ${racePills(common)}
+    <div class="field-label" style="margin-top:8px;color:var(--text-dim)">Exotic</div>
+    ${racePills(exotic)}
     ${selRace ? `
     <div style="margin-top:10px;padding:10px 12px;background:var(--gray-bg);border-radius:6px;font-size:12px">
-      <div style="font-weight:700;margin-bottom:4px">${escHtml(selRace.name)} <span style="font-weight:400;color:var(--text-dim)">· ${selRace.size} · Speed ${selRace.speed}ft</span></div>
-      <div style="color:var(--accent,#b48a40);margin-bottom:6px;font-size:11px">${escHtml(asiStr)}${escHtml(flexNote)}</div>
+      <div style="font-weight:700;margin-bottom:4px">${escHtml(selRace.name)} <span style="font-weight:400;color:var(--text-dim)">· ${escHtml(selRace.size)} · Speed ${selRace.speed}ft · ${escHtml(selRace.source || '')}</span></div>
+      <div style="color:var(--accent,#b48a40);margin-bottom:6px;font-size:11px">${escHtml(raceAsiSummary(selRace))}</div>
+      ${selRace.skills?.length ? `<div style="color:var(--accent,#b48a40);margin-bottom:6px;font-size:11px">Grants proficiency: ${escHtml(selRace.skills.join(', '))}</div>` : ''}
       <div style="color:var(--text-dim);margin-bottom:6px;font-size:11px">${escHtml(selRace.desc)}</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
-        ${selRace.traits.map(t=>`<span style="font-size:10px;background:var(--card-bg);border:1px solid var(--gray-light);border-radius:8px;padding:2px 8px">${escHtml(t)}</span>`).join('')}
+        ${selRace.traits.map(t => `<span style="font-size:10px;background:var(--card-bg);border:1px solid var(--gray-light);border-radius:8px;padding:2px 8px" title="${escHtml(t.desc)}">${escHtml(t.name)}</span>`).join('')}
       </div>
     </div>` : ''}
   `;
@@ -496,29 +459,50 @@ function renderStep1(body) {
 
 function renderStep2(body) {
   const mode = state.abilityMode;
-  const race = RACES.find(r => r.key === state.race);
-  const asi = race?.asi || {};
+  const race = currentRace();
   const flex = race?.flexAsi;
   const allAssigned = Object.values(state.abilityAssign).every(v => v !== null);
 
-  function racialBonusFor(ab) {
-    let b = asi[ab] || 0;
-    if (flex) b += state.flexAsiChoices.filter(x => x === ab).length * flex.points;
-    return b;
-  }
-
-  const flexPicker = flex ? `
+  const excludeNote = flex?.exclude?.length
+    ? ` (not ${flex.exclude.map(a => ABILITY_NAMES[a]).join('/')})` : '';
+  let flexPicker = flex ? `
     <div style="margin-bottom:12px;padding:10px;background:var(--gray-bg);border-radius:6px">
-      <div class="field-label" style="margin-bottom:6px">Racial bonus: +${flex.points} to ${flex.count} abilities of choice (not CHA)</div>
+      <div class="field-label" style="margin-bottom:6px">Racial bonus: +${flex.points} to ${flex.count} abilities of choice${excludeNote}</div>
       <div class="pills">
-        ${ABILITIES.filter(ab => !flex.exclude.includes(ab)).map(ab => {
-          const picked = state.flexAsiChoices.filter(x => x === ab).length;
+        ${ABILITIES.filter(ab => !(flex.exclude || []).includes(ab)).map(ab => {
+          const picked = state.flexAsiChoices.includes(ab);
           const dis = !picked && state.flexAsiChoices.length >= flex.count;
           return `<div class="pill${picked ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="toggleFlexAsi('${ab}')">${ABILITY_NAMES[ab]}</div>`;
         }).join('')}
       </div>
       <div style="font-size:10px;color:var(--text-dim);margin-top:4px">${state.flexAsiChoices.length}/${flex.count} chosen</div>
     </div>` : '';
+
+  if (race?.flexible_asi) {
+    const is21 = state.flexMode !== '111';
+    flexPicker = `
+    <div style="margin-bottom:12px;padding:10px;background:var(--gray-bg);border-radius:6px">
+      <div class="field-label" style="margin-bottom:6px">${escHtml(race.name)} bonus: +2 and +1, or +1 to three abilities</div>
+      <div class="pills" style="margin-bottom:6px">
+        <div class="pill${is21 ? ' selected' : ''}" onclick="setFlexMode('21')">+2 and +1</div>
+        <div class="pill${!is21 ? ' selected' : ''}" onclick="setFlexMode('111')">+1 / +1 / +1</div>
+      </div>
+      ${is21 ? `
+      <div class="field-label">+2 to</div>
+      <div class="pills">${ABILITIES.map(ab => `<div class="pill${state.flexPlus2 === ab ? ' selected' : ''}" onclick="setFlexPlus2('${ab}')">${ABILITY_NAMES[ab]}</div>`).join('')}</div>
+      <div class="field-label" style="margin-top:6px">+1 to</div>
+      <div class="pills">${ABILITIES.map(ab => {
+        const dis = state.flexPlus2 === ab;
+        return `<div class="pill${state.flexPlus1 === ab ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="${dis ? '' : `setFlexPlus1('${ab}')`}">${ABILITY_NAMES[ab]}</div>`;
+      }).join('')}</div>` : `
+      <div class="pills">${ABILITIES.map(ab => {
+        const sel = state.flexAsiChoices.includes(ab);
+        const dis = !sel && state.flexAsiChoices.length >= 3;
+        return `<div class="pill${sel ? ' selected' : ''}${dis ? ' disabled' : ''}" onclick="toggleFlexAsi('${ab}')">${ABILITY_NAMES[ab]}</div>`;
+      }).join('')}</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:4px">${state.flexAsiChoices.length}/3 chosen</div>`}
+    </div>`;
+  }
 
   body.innerHTML = `
     <div class="step-title">Ability Scores</div>
@@ -609,9 +593,10 @@ function renderStep3(body) {
   const bgTools = selectedBg ? (selectedBg.tool_proficiencies || []) : [];
   const bgLangs = selectedBg ? selectedBg.languages : 0;
   const bgFeature = selectedBg ? selectedBg.feature : '';
-  const raceData = RACES.find(r => r.key === state.race);
+  const raceData = currentRace();
   const bonusSkills = raceData?.bonusSkills;
-  const takenSkills = [...bgSkills, ...state.racialSkills];
+  const grantedSkills = raceData?.skills || [];
+  const takenSkills = [...bgSkills, ...grantedSkills, ...state.racialSkills];
   const available = state.classData.skill_choices.filter(s => !takenSkills.includes(s));
   const max = state.classData.skill_count;
   const clsName = className(state.classKey);
@@ -624,7 +609,7 @@ function renderStep3(body) {
   }).join('');
 
   const racialSkillPills = bonusSkills ? (() => {
-    const alreadyTaken = [...bgSkills, ...state.classSkills];
+    const alreadyTaken = [...bgSkills, ...grantedSkills, ...state.classSkills];
     return ALL_SKILLS.filter(s => !alreadyTaken.includes(s)).map(s => {
       const sel = state.racialSkills.includes(s);
       const dis = !sel && state.racialSkills.length >= bonusSkills.count;
@@ -633,7 +618,8 @@ function renderStep3(body) {
     }).join('');
   })() : '';
 
-  const bonusSkillNote = bonusSkills ? ` · ${raceData.name}: +${bonusSkills.count} from any list` : '';
+  const bonusSkillNote = (bonusSkills ? ` · ${raceData.name}: +${bonusSkills.count} from any list` : '')
+    + (grantedSkills.length ? ` · ${raceData.name} grants ${grantedSkills.join(', ')}` : '');
 
   body.innerHTML = `
     <div class="step-title">Background & Skills</div>
@@ -652,7 +638,7 @@ function renderStep3(body) {
     <div class="field-label" style="margin-top:12px">${clsName} skills (choose ${max})</div>
     <div class="pills">${classSkillPills}</div>
     ${_hasExpertise() ? (() => {
-      const profSkills = [...new Set([...bgSkills, ...state.racialSkills, ...state.classSkills])];
+      const profSkills = [...new Set([...bgSkills, ...grantedSkills, ...state.racialSkills, ...state.classSkills])];
       const expertMax = 2;
       return `
       <div class="field-label" style="margin-top:12px">Expertise (choose ${expertMax})</div>
@@ -770,12 +756,8 @@ function renderStep4(body) {
 }
 
 function builderCastingMod() {
-  const race = RACES.find(r => r.key === state.race);
-  const asi = race ? race.asi : {};
   const castingAb = state.classData.spellcasting_ability || SPELLCASTING_ABILITY[state.classKey];
-  const flex = race?.flexAsi;
-  const flexBonus = flex ? state.flexAsiChoices.filter(x => x === castingAb).length * flex.points : 0;
-  const score = (state.abilityAssign[castingAb] || 10) + (asi[castingAb] || 0) + flexBonus;
+  const score = (state.abilityAssign[castingAb] || 10) + racialBonusFor(castingAb);
   return { castingAb, castingMod: abilityMod(score) };
 }
 
@@ -905,15 +887,30 @@ window.selectClass = async (k) => {
   renderStep();
 };
 window.selectLevel = (l) => { state.level = l; renderStep(); };
-window.selectRace = (k) => { state.race = k; state.flexAsiChoices = []; state.racialSkills = []; renderStep(); };
-window.toggleFlexAsi = (ab) => {
-  const flex = RACES.find(r => r.key === state.race)?.flexAsi;
-  if (!flex) return;
-  const i = state.flexAsiChoices.indexOf(ab);
-  if (i >= 0) state.flexAsiChoices.splice(i, 1);
-  else if (state.flexAsiChoices.length < flex.count) state.flexAsiChoices.push(ab);
+window.selectRace = (k) => {
+  state.race = k; state.flexAsiChoices = []; state.racialSkills = [];
+  state.flexMode = '21'; state.flexPlus2 = null; state.flexPlus1 = null;
   renderStep();
 };
+window.toggleFlexAsi = (ab) => {
+  const race = currentRace();
+  const max = race?.flexAsi ? race.flexAsi.count : (race?.flexible_asi ? 3 : 0);
+  if (!max) return;
+  const i = state.flexAsiChoices.indexOf(ab);
+  if (i >= 0) state.flexAsiChoices.splice(i, 1);
+  else if (state.flexAsiChoices.length < max) state.flexAsiChoices.push(ab);
+  renderStep();
+};
+window.setFlexMode = (m) => {
+  state.flexMode = m; state.flexPlus2 = null; state.flexPlus1 = null; state.flexAsiChoices = [];
+  renderStep();
+};
+window.setFlexPlus2 = (ab) => {
+  state.flexPlus2 = ab;
+  if (state.flexPlus1 === ab) state.flexPlus1 = null;
+  renderStep();
+};
+window.setFlexPlus1 = (ab) => { state.flexPlus1 = ab; renderStep(); };
 window.setBgFilter = (f) => { state.bgFilter = f; renderStep(); };
 window.selectBackground = (k) => {
   state.background = k;
@@ -976,13 +973,9 @@ window.toggleSpell = (k, type) => {
 
 window.finishBuilder = async () => {
   if (!validateStep()) return;
-  const race = RACES.find(r => r.key === state.race);
-  const asi = race?.asi || {};
-  const flex = race?.flexAsi;
   const scores = {};
   for (const ab of ABILITIES) {
-    const flexBonus = flex ? state.flexAsiChoices.filter(x => x === ab).length * flex.points : 0;
-    scores[ab] = (state.abilityAssign[ab] || 10) + (asi[ab] || 0) + flexBonus;
+    scores[ab] = (state.abilityAssign[ab] || 10) + racialBonusFor(ab);
   }
   const level = state.level;
   const profBonus = Math.floor((level - 1) / 4) + 2;
@@ -999,7 +992,8 @@ window.finishBuilder = async () => {
   }
 
   const bgSkills = state.background ? (state.backgroundsData[state.background]?.skill_proficiencies || []) : [];
-  const skillProf = [...new Set([...bgSkills, ...state.racialSkills, ...state.classSkills])];
+  const raceSkills = currentRace()?.skills || [];
+  const skillProf = [...new Set([...bgSkills, ...raceSkills, ...state.racialSkills, ...state.classSkills])];
 
   const payload = {
     name: state.name,
@@ -1051,16 +1045,25 @@ function validateStep() {
         if (v < 3 || v > 20) { alert(`${ABILITY_NAMES[ab]} must be between 3 and 20.`); return false; }
       }
     }
-    const flex = RACES.find(r => r.key === state.race)?.flexAsi;
+    const race = currentRace();
+    const flex = race?.flexAsi;
     if (flex && state.flexAsiChoices.length < flex.count) {
       alert(`Choose ${flex.count} abilities for your racial +${flex.points} bonus.`); return false;
+    }
+    if (race?.flexible_asi) {
+      if (state.flexMode === '111' && state.flexAsiChoices.length < 3) {
+        alert('Choose three abilities for your racial +1 bonuses.'); return false;
+      }
+      if (state.flexMode !== '111' && (!state.flexPlus2 || !state.flexPlus1)) {
+        alert('Choose which abilities get your racial +2 and +1.'); return false;
+      }
     }
   }
   if (s === 3) {
     if (!state.background) { alert('Choose a background.'); return false; }
-    const raceBonus = RACES.find(r => r.key === state.race)?.bonusSkills;
+    const raceBonus = currentRace()?.bonusSkills;
     if (raceBonus && state.racialSkills.length < raceBonus.count) {
-      alert(`Choose ${raceBonus.count} bonus skills for ${RACES.find(r => r.key === state.race).name}.`); return false;
+      alert(`Choose ${raceBonus.count} bonus skills for ${currentRace().name}.`); return false;
     }
   }
   return true;
