@@ -152,7 +152,7 @@ def _row_to_character(row):
 
 @app.route('/')
 def index():
-    if 'user' not in session:
+    if 'uid' not in session:
         return redirect('/login')
     return render_template('index.html')
 

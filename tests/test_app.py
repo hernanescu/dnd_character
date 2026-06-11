@@ -53,6 +53,14 @@ def test_data_endpoints_require_login(client):
     assert client.post('/api/log', json={}).status_code == 401
 
 
+def test_stale_pre_auth_session_redirects_to_login(client):
+    # Sessions from the old auth scheme have 'user' but no 'uid'
+    with client.session_transaction() as sess:
+        sess['user'] = 'hernan'
+    r = client.get('/')
+    assert r.status_code == 302 and '/login' in r.headers['Location']
+
+
 def test_spells_filter_by_class(client):
     login(client)
     assert 'cure-wounds' in client.get('/api/spells?class=cleric').get_json()

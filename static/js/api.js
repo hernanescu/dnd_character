@@ -2,6 +2,10 @@ async function apiFetch(path, opts = {}) {
   const options = { headers: { 'Content-Type': 'application/json' }, ...opts };
   if (opts.body) options.body = JSON.stringify(opts.body);
   const res = await fetch(path, options);
+  if (res.status === 401) {
+    window.location = '/login';
+    throw new Error('unauthorized');
+  }
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
