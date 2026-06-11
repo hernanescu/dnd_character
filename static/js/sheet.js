@@ -209,6 +209,28 @@ export async function initSheet(id) {
   render();
 }
 
+function sheetTipsCard() {
+  if (localStorage.getItem('dnd-sheet-tips')) return '';
+  return `
+    <div style="margin:8px 12px;padding:12px 14px;background:var(--gray-bg);border:1px solid var(--gray-light);border-radius:8px;font-size:12px;line-height:1.6">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-weight:700">Quick tips</span>
+        <button class="btn btn-sm btn-outline" onclick="dismissSheetTips()">Got it</button>
+      </div>
+      <div style="color:var(--text-dim)">
+        <div>• Each tab has an <b>✏ Edit</b> button to add or remove things.</div>
+        <div>• Tap the <b>HP pill</b> (top right) to set your hit points directly.</div>
+        <div>• The bar below tracks table resources (Momentum, Supplies, Stress, Lucky) — adjust with <b>+/−</b>.</div>
+        <div>• In <b>Inventory</b>, tap the ○ dot to equip an item; magic bonuses only count while equipped (and attuned).</div>
+      </div>
+    </div>`;
+}
+
+window.dismissSheetTips = () => {
+  localStorage.setItem('dnd-sheet-tips', '1');
+  render();
+};
+
 function render() {
   const app = document.getElementById('app');
   const tabs = getTabs();
@@ -249,6 +271,7 @@ function render() {
         </div>`;
       }).join('')}
     </div>
+    ${sheetTipsCard()}
     <div class="tabs">
       ${tabs.map((t, i) => `<div class="tab${activeTab === i ? ' active' : ''}" onclick="switchTab(${i})">${t}</div>`).join('')}
     </div>

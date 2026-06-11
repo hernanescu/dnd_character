@@ -358,6 +358,15 @@ export async function renderList() {
     if (!chars.length) {
       body.innerHTML = `
         <div class="empty-state">
+          <div style="max-width:340px;margin:0 auto 16px;padding:14px 16px;background:var(--gray-bg);border:1px solid var(--gray-light);border-radius:8px;text-align:left;font-size:13px;line-height:1.6">
+            <div style="font-weight:700;margin-bottom:6px">Welcome! 👋</div>
+            <div style="color:var(--text-dim)">
+              This is your D&amp;D companion. Build a character with the step-by-step
+              wizard, then use its sheet during sessions to track HP, spell slots,
+              inventory, and world notes. The <b>Spells</b> and <b>Items</b> buttons
+              above open the full reference libraries.
+            </div>
+          </div>
           <div class="empty-state-text">No characters yet</div>
           <button class="btn btn-primary" onclick="window.location='/?view=new'">Create Character</button>
         </div>`;
