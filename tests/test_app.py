@@ -29,3 +29,19 @@ def test_characters_are_per_user(client):
     assert client.get(f'/api/characters/{cid}').status_code == 404
     assert client.put(f'/api/characters/{cid}', json={'level': 9}).status_code == 404
     assert client.delete(f'/api/characters/{cid}').status_code == 404
+
+
+def test_put_rejects_unknown_columns(client):
+    login(client)
+    cid = _mk(client)
+    r = client.put(f'/api/characters/{cid}', json={'evil; DROP TABLE characters--': 1})
+    assert r.status_code == 400
+
+
+def test_lucky_points_and_bardic_inspiration_persist(client):
+    login(client)
+    cid = _mk(client)
+    r = client.put(f'/api/characters/{cid}', json={'lucky_points': 1, 'bardic_inspiration': 2})
+    assert r.status_code == 200
+    got = client.get(f'/api/characters/{cid}').get_json()
+    assert got['lucky_points'] == 1 and got['bardic_inspiration'] == 2

@@ -40,6 +40,12 @@ _JSON_FIELDS = {
     'inventory', 'coins', 'notes', 'choices', 'armor',
 }
 
+_SCALAR_FIELDS = {
+    'name', 'class_key', 'subclass_key', 'level', 'race', 'background',
+    'hp_max', 'hp_current', 'ac', 'momentum', 'supply', 'stress',
+    'lucky_points', 'bardic_inspiration',
+}
+
 
 def _db_path():
     return app.config.get('DB_PATH', _DEFAULT_DB)
@@ -98,13 +104,16 @@ def init_db():
             stress INTEGER NOT NULL DEFAULT 5,
             choices TEXT NOT NULL DEFAULT '{}',
             user_id INTEGER REFERENCES users(id),
+            lucky_points INTEGER,
+            bardic_inspiration INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ''')
     db.commit()
     for col in ('momentum INTEGER', 'supply INTEGER', 'stress INTEGER',
                 "choices TEXT NOT NULL DEFAULT '{}'", 'armor TEXT DEFAULT NULL',
-                'user_id INTEGER REFERENCES users(id)'):
+                'user_id INTEGER REFERENCES users(id)',
+                'lucky_points INTEGER', 'bardic_inspiration INTEGER'):
         try:
             db.execute(f'ALTER TABLE characters ADD COLUMN {col}')
         except Exception:
@@ -311,7 +320,14 @@ def update_character(char_id):
         return jsonify({'error': 'not found'}), 404
     updates = {}
     for key, val in data.items():
-        updates[key] = json.dumps(val) if key in _JSON_FIELDS else val
+        if key in _JSON_FIELDS:
+            updates[key] = json.dumps(val)
+        elif key in _SCALAR_FIELDS:
+            updates[key] = val
+        else:
+            return jsonify({'error': f'unknown field: {key}'}), 400
+    if not updates:
+        return jsonify({'error': 'no fields'}), 400
     set_clause = ', '.join(f'{k} = ?' for k in updates)
     db.execute(f'UPDATE characters SET {set_clause} WHERE id = ?',
                list(updates.values()) + [char_id])
