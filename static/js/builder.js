@@ -365,12 +365,12 @@ export async function renderList() {
         <div class="char-card-wrap">
           <a class="char-card" href="/?view=sheet&id=${c.id}">
             <div>
-              <div class="char-card-name">${c.name}</div>
+              <div class="char-card-name">${escHtml(c.name)}</div>
               <div class="char-card-meta">${className(c.class_key)} · Level ${c.level}</div>
             </div>
             <div class="char-card-chevron">›</div>
           </a>
-          <button class="char-card-delete" onclick="event.preventDefault();event.stopPropagation();deleteChar(${c.id},'${escHtml(c.name)}')" title="Delete character">✕</button>
+          <button class="char-card-delete" data-name="${escHtml(c.name)}" onclick="event.preventDefault();event.stopPropagation();deleteChar(${c.id}, this.dataset.name)" title="Delete character">✕</button>
         </div>`).join('') + `
         <div style="padding:16px">
           <button class="btn btn-outline btn-block" onclick="window.location='/?view=new'">+ New Character</button>

@@ -214,7 +214,7 @@ function render() {
   const tabs = getTabs();
   const clsName = char.class_key.charAt(0).toUpperCase() + char.class_key.slice(1);
   const acVal = computeAC();
-  const ppVal = 10 + skillBonus('perception', 'wis');
+  const ppVal = 10 + skillBonus('Perception', 'wis');
   const hpPct = char.hp_current / char.hp_max;
   app.innerHTML = `
     <div class="app-header">
@@ -230,7 +230,7 @@ function render() {
               / ${char.hp_max} HP
             </div>
             <button class="theme-toggle-btn" onclick="event.stopPropagation();toggleTheme()" title="Toggle theme">${themeIcon(document.documentElement.getAttribute('data-theme'))}</button>
-            <button class="icon-btn icon-btn-danger" onclick="event.stopPropagation();deleteCurrentChar(${char.id},'${escHtml(char.name)}')" title="Delete character">✕</button>
+            <button class="icon-btn icon-btn-danger" data-name="${escHtml(char.name)}" onclick="event.stopPropagation();deleteCurrentChar(${char.id}, this.dataset.name)" title="Delete character">✕</button>
           </div>
         </div>
         <div class="char-meta">${clsName}${char.subclass_key ? ` · ${escHtml(char.subclass_key)}` : ''} · Level ${char.level} · ${escHtml(char.background_name)}</div>
@@ -466,7 +466,8 @@ function renderCombat(el) {
       if (linkedInv?.base_weapon && BASE_WEAPONS[linkedInv.base_weapon]) dmgParts.push(BASE_WEAPONS[linkedInv.base_weapon].die);
       else dmgParts.push(w.damage_die || '1d6');
       const dmgDie = dmgParts[0];
-      const dmg = `${dmgDie}${mod >= 0 ? '+' : ''}${mod}`;
+      const dmgMod = mod + wBonus;
+      const dmg = `${dmgDie}${dmgMod >= 0 ? '+' : ''}${dmgMod}`;
       const bonusTag = wBonus ? ` <span style="font-size:9px;color:#888">+${wBonus} eq</span>` : '';
       const linkBadge = linkedInv
         ? (linkedInv.equipped
@@ -1148,7 +1149,7 @@ window.onWeaponNameInput = () => {
     const label = lib?.weapon_bonus ? `+${lib.weapon_bonus} ` : '';
     const eq = it.equipped ? '● ' : '○ ';
     const baseTag = it.base_weapon && BASE_WEAPONS[it.base_weapon] ? ` (${BASE_WEAPONS[it.base_weapon].die} ${BASE_WEAPONS[it.base_weapon].type})` : '';
-    return `<div style="padding:4px 8px;cursor:pointer;font-size:11px" onmouseover="this.style.background='var(--gray-bg)'" onmouseout="this.style.background=''" onclick="selectWeaponSuggestion('${escHtml(it.name)}')">${eq}${label}${escHtml(it.name)}${baseTag}</div>`;
+    return `<div style="padding:4px 8px;cursor:pointer;font-size:11px" data-name="${escHtml(it.name)}" onmouseover="this.style.background='var(--gray-bg)'" onmouseout="this.style.background=''" onclick="selectWeaponSuggestion(this.dataset.name)">${eq}${label}${escHtml(it.name)}${baseTag}</div>`;
   }).join('');
 };
 
