@@ -3,7 +3,10 @@ import json
 import sqlite3
 import secrets
 from functools import wraps
+
+import click
 from flask import Flask, g, jsonify, request, render_template, session, redirect
+from werkzeug.security import generate_password_hash, check_password_hash
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEFAULT_DB = os.path.join(BASE_DIR, 'data', 'dnd.db')
@@ -23,15 +26,10 @@ except FileNotFoundError:
     open(_KEY_FILE, 'w').write(_k)
     app.secret_key = _k
 
-_USERS = {'hernan': 'hernan@2026!'}
-
-_PUBLIC_ROUTES = {'/login', '/api/login', '/api/me', '/api/health'}
-
-
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if 'user' not in session:
+        if 'uid' not in session:
             return jsonify({'error': 'unauthorized'}), 401
         return f(*args, **kwargs)
     return decorated
@@ -68,6 +66,12 @@ def close_db(e=None):
 def init_db():
     db = get_db()
     db.executescript('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS characters (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -133,13 +137,49 @@ def login_page():
     return render_template('login.html')
 
 
+def create_user(username, password):
+    db = get_db()
+    db.execute(
+        'INSERT INTO users (username, password_hash) VALUES (?, ?) '
+        'ON CONFLICT(username) DO UPDATE SET password_hash = excluded.password_hash',
+        (username, generate_password_hash(password)))
+    db.commit()
+
+
+@app.cli.command('create-user')
+@click.argument('username')
+@click.password_option()
+def create_user_cmd(username, password):
+    init_db()
+    create_user(username, password)
+    click.echo(f'User {username!r} created/updated.')
+
+
+@app.cli.command('claim-characters')
+@click.argument('username')
+def claim_characters_cmd(username):
+    """Assign all unowned characters to USERNAME (one-time migration)."""
+    init_db()
+    db = get_db()
+    row = db.execute('SELECT id FROM users WHERE username = ?', (username,)).fetchone()
+    if not row:
+        raise click.ClickException(f'No such user: {username}')
+    cur = db.execute('UPDATE characters SET user_id = ? WHERE user_id IS NULL', (row['id'],))
+    db.commit()
+    click.echo(f'Claimed {cur.rowcount} characters for {username!r}.')
+
+
 @app.route('/api/login', methods=['POST'])
 def api_login():
-    data = request.get_json()
-    username = (data or {}).get('username', '').strip()
-    password = (data or {}).get('password', '').strip()
-    if username in _USERS and _USERS[username] == password:
+    data = request.get_json(silent=True) or {}
+    username = (data.get('username') or '').strip()
+    password = data.get('password') or ''
+    db = get_db()
+    row = db.execute('SELECT id, password_hash FROM users WHERE username = ?',
+                     (username,)).fetchone()
+    if row and check_password_hash(row['password_hash'], password):
         session['user'] = username
+        session['uid'] = row['id']
         return jsonify({'ok': True})
     return jsonify({'ok': False, 'error': 'Invalid credentials'}), 401
 
@@ -147,6 +187,7 @@ def api_login():
 @app.route('/api/logout', methods=['POST'])
 def api_logout():
     session.pop('user', None)
+    session.pop('uid', None)
     return jsonify({'ok': True})
 
 
