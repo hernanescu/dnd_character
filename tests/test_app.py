@@ -57,3 +57,16 @@ def test_spells_filter_by_class(client):
     login(client)
     assert 'cure-wounds' in client.get('/api/spells?class=cleric').get_json()
     assert client.get('/api/spells?class=wizard').get_json() == {}
+
+
+def test_data_cache_reloads_on_mtime_change(client, app):
+    import json as _json
+    import os
+    import time
+    login(client)
+    path = os.path.join(app.config['DATA_DIR'], 'items.json')
+    assert client.get('/api/items').get_json() == {}
+    with open(path, 'w') as f:
+        _json.dump({'x': {'name': 'X'}}, f)
+    os.utime(path, (time.time() + 2, time.time() + 2))
+    assert 'x' in client.get('/api/items').get_json()

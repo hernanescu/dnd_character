@@ -17,6 +17,12 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, 'static'),
     template_folder=os.path.join(BASE_DIR, 'templates'),
 )
+try:
+    from flask_compress import Compress
+    Compress(app)
+except ImportError:
+    pass
+
 _KEY_FILE = os.path.join(BASE_DIR, 'data', '.secret_key')
 try:
     app.secret_key = open(_KEY_FILE).read().strip()
@@ -45,6 +51,21 @@ _SCALAR_FIELDS = {
     'hp_max', 'hp_current', 'ac', 'momentum', 'supply', 'stress',
     'lucky_points', 'bardic_inspiration',
 }
+
+
+_json_cache = {}
+
+
+def _load_json(path):
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return None
+    cached = _json_cache.get(path)
+    if cached is None or cached[0] != mtime:
+        with open(path) as f:
+            _json_cache[path] = (mtime, json.load(f))
+    return _json_cache[path][1]
 
 
 def _db_path():
@@ -210,22 +231,21 @@ def health():
 @app.route('/api/classes/<key>')
 @login_required
 def get_class(key):
-    path = os.path.join(_data_dir(), 'classes', f'{key}.json')
-    if not os.path.isfile(path):
+    if not key.replace('-', '').isalnum():
         return jsonify({'error': 'not found'}), 404
-    with open(path) as f:
-        return jsonify(json.load(f))
+    data = _load_json(os.path.join(_data_dir(), 'classes', f'{key}.json'))
+    if data is None:
+        return jsonify({'error': 'not found'}), 404
+    return jsonify(data)
 
 
 @app.route('/api/spells')
 @login_required
 def get_spells():
     class_filter = request.args.get('class', '').strip().lower()
-    path = os.path.join(_data_dir(), 'spells.json')
-    if not os.path.isfile(path):
+    spells = _load_json(os.path.join(_data_dir(), 'spells.json'))
+    if spells is None:
         return jsonify({}), 200
-    with open(path) as f:
-        spells = json.load(f)
     if class_filter:
         spells = {k: v for k, v in spells.items() if class_filter in v.get('classes', [])}
     return jsonify(spells)
@@ -237,11 +257,9 @@ def get_items():
     source = request.args.get('source', '').strip().lower()
     rarity = request.args.get('rarity', '').strip().lower()
     q = request.args.get('q', '').strip().lower()
-    path = os.path.join(_data_dir(), 'items.json')
-    if not os.path.isfile(path):
+    items = _load_json(os.path.join(_data_dir(), 'items.json'))
+    if items is None:
         return jsonify({}), 200
-    with open(path) as f:
-        items = json.load(f)
     if source:
         items = {k: v for k, v in items.items() if v.get('source', '').lower() == source}
     if rarity:
@@ -254,11 +272,10 @@ def get_items():
 @app.route('/api/backgrounds')
 @login_required
 def get_backgrounds():
-    path = os.path.join(_data_dir(), 'backgrounds.json')
-    if not os.path.isfile(path):
+    data = _load_json(os.path.join(_data_dir(), 'backgrounds.json'))
+    if data is None:
         return jsonify({'error': 'not found'}), 404
-    with open(path) as f:
-        return jsonify(json.load(f))
+    return jsonify(data)
 
 
 @app.route('/api/characters', methods=['GET'])
