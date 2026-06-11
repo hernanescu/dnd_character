@@ -42,8 +42,12 @@ Pact slots now stored like normal slots (e.g. level 5 → `{"3": 2}`). Sheet ren
 ### 4. Snapshot / restore tool
 Button to save current HP/resource state as a snapshot and restore later.
 
-### 5. Speed hardcoded
-Combat tab shows "30 ft" always; races define `speed` but it isn't persisted on the character.
+### 5. ~~Speed hardcoded~~ (fixed 2026-06-11)
+Races are now scraped (`scripts/scrape_races.py` → `data/races.json`, served at `/api/races`).
+Sheet shows real walking speed and racial traits; builder applies ASI (incl. MPMM flexible
++2/+1 or +1/+1/+1) and granted skills. Remaining race gaps: traits with mechanical effects
+beyond ASI/skills/speed (Dwarven Toughness +1 HP/level, innate spells, variant human's
+bonus feat) are displayed as text, not auto-applied.
 
 ## How to run
 ```bash
