@@ -20,6 +20,9 @@ def app(tmp_path):
     (data_dir / 'races.json').write_text(
         '{"human": {"name": "Human", "category": "common", "speed": 30,'
         ' "asi": {"str": 1}, "traits": []}}')
+    (data_dir / 'feats.json').write_text(
+        '{"athlete": {"name": "Athlete", "category": "published",'
+        ' "asi": {"choices": ["str", "dex"], "points": 1}, "benefits": []}}')
     flask_app.config.update(DB_PATH=str(db_path), DATA_DIR=str(data_dir), TESTING=True)
     with flask_app.app_context():
         init_db()

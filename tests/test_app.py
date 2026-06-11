@@ -49,7 +49,7 @@ def test_lucky_points_and_bardic_inspiration_persist(client):
 
 def test_data_endpoints_require_login(client):
     for path in ('/api/spells', '/api/items', '/api/backgrounds', '/api/classes/bard',
-                 '/api/races'):
+                 '/api/races', '/api/feats'):
         assert client.get(path).status_code == 401, path
     assert client.post('/api/log', json={}).status_code == 401
 
@@ -58,6 +58,26 @@ def test_races_endpoint(client):
     login(client)
     races = client.get('/api/races').get_json()
     assert races['human']['asi'] == {'str': 1}
+
+
+def test_feats_endpoint(client):
+    login(client)
+    feats = client.get('/api/feats').get_json()
+    assert feats['athlete']['asi'] == {'choices': ['str', 'dex'], 'points': 1}
+
+
+def test_character_feats_persist(client):
+    login(client)
+    cid = _mk(client)
+    picked = [{'key': 'athlete', 'ability': 'str'}, {'key': 'alert'}]
+    assert client.put(f'/api/characters/{cid}', json={'feats': picked}).status_code == 200
+    assert client.get(f'/api/characters/{cid}').get_json()['feats'] == picked
+
+
+def test_new_character_has_empty_feats(client):
+    login(client)
+    cid = _mk(client)
+    assert client.get(f'/api/characters/{cid}').get_json()['feats'] == []
 
 
 def test_stale_pre_auth_session_redirects_to_login(client):

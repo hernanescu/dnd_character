@@ -43,7 +43,7 @@ def login_required(f):
 _JSON_FIELDS = {
     'ability_scores', 'skill_proficiencies', 'expertise',
     'spells_known', 'spell_slots', 'features', 'weapons',
-    'inventory', 'coins', 'notes', 'choices', 'armor',
+    'inventory', 'coins', 'notes', 'choices', 'armor', 'feats',
 }
 
 _SCALAR_FIELDS = {
@@ -124,6 +124,7 @@ def init_db():
             supply INTEGER NOT NULL DEFAULT 5,
             stress INTEGER NOT NULL DEFAULT 5,
             choices TEXT NOT NULL DEFAULT '{}',
+            feats TEXT NOT NULL DEFAULT '[]',
             user_id INTEGER REFERENCES users(id),
             lucky_points INTEGER,
             bardic_inspiration INTEGER,
@@ -134,7 +135,8 @@ def init_db():
     for col in ('momentum INTEGER', 'supply INTEGER', 'stress INTEGER',
                 "choices TEXT NOT NULL DEFAULT '{}'", 'armor TEXT DEFAULT NULL',
                 'user_id INTEGER REFERENCES users(id)',
-                'lucky_points INTEGER', 'bardic_inspiration INTEGER'):
+                'lucky_points INTEGER', 'bardic_inspiration INTEGER',
+                "feats TEXT NOT NULL DEFAULT '[]'"):
         try:
             db.execute(f'ALTER TABLE characters ADD COLUMN {col}')
         except Exception:
@@ -282,6 +284,15 @@ def get_backgrounds():
 @login_required
 def get_races():
     data = _load_json(os.path.join(_data_dir(), 'races.json'))
+    if data is None:
+        return jsonify({'error': 'not found'}), 404
+    return jsonify(data)
+
+
+@app.route('/api/feats')
+@login_required
+def get_feats():
+    data = _load_json(os.path.join(_data_dir(), 'feats.json'))
     if data is None:
         return jsonify({'error': 'not found'}), 404
     return jsonify(data)
