@@ -143,6 +143,10 @@ def _parse_class_table(content, cls):
                 col['cantrips'] = i
             elif 'spells known' in h:
                 col['spells_known'] = i
+            elif h == 'spell slots':
+                col['pact_slots'] = i
+            elif h == 'slot level':
+                col['pact_level'] = i
             else:
                 m = re.match(r'^(\d+)(?:st|nd|rd|th)$', h)
                 if m:
@@ -186,6 +190,13 @@ def _parse_class_table(content, cls):
                 idx = col[key]
                 if idx < len(cells) and cells[idx].isdigit():
                     slots[slot_lvl] = int(cells[idx])
+            # Warlock pact magic: "Spell Slots" + "Slot Level" columns
+            if not slots and 'pact_slots' in col and 'pact_level' in col:
+                si, li = col['pact_slots'], col['pact_level']
+                if si < len(cells) and li < len(cells) and cells[si].isdigit():
+                    m2 = re.match(r'(\d+)', cells[li])
+                    if m2:
+                        slots = {m2.group(1): int(cells[si])}
             if slots:
                 cls['spell_slots_by_level'][level] = slots
 
@@ -368,7 +379,7 @@ def parse_spell(slug):
 
         # Level/school/ritual — find the para that has level info
         level_para = None
-        stat_para = None
+        stat_idx = None
         desc_start = 3
         for i, p in enumerate(paras[:6]):
             t = p.get_text().strip()
@@ -391,7 +402,7 @@ def parse_spell(slug):
             spell['ritual'] = '(ritual)' in level_para.lower()
 
         # Stat block (casting_time, range, components, duration)
-        if stat_idx < len(paras):
+        if stat_idx is not None and stat_idx < len(paras):
             stat_text = paras[stat_idx].get_text()
             for line in stat_text.split('\n'):
                 line = line.strip()
@@ -441,11 +452,28 @@ def scrape(class_name='bard', output_path=None):
 
     cls, subclass_links = parse_class_page(class_name)
 
+    # Preserve feature_choices injected by scrape_choices.py across re-scrapes
+    existing_path = output_path or os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        'data', 'classes', f'{class_name}.json'
+    )
+    prev_choices, prev_sub_choices = {}, {}
+    if os.path.isfile(existing_path):
+        with open(existing_path) as f:
+            prev = json.load(f)
+        prev_choices = prev.get('feature_choices') or {}
+        prev_sub_choices = {k: v.get('feature_choices') for k, v in (prev.get('subclasses') or {}).items()
+                            if v.get('feature_choices')}
+    if prev_choices:
+        cls['feature_choices'] = prev_choices
+
     # Subclasses
     print(f"  {len(subclass_links)} subclass pages found")
     for href in sorted(subclass_links):
         try:
             key, sub = parse_subclass(class_name, href)
+            if key in prev_sub_choices:
+                sub['feature_choices'] = prev_sub_choices[key]
             cls['subclasses'][key] = sub
             print(f"    ✓ {sub['name']} ({len(sub['features_by_level'])} levels mapped)")
         except Exception as e:
