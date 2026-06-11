@@ -1,3 +1,11 @@
 __pycache__/
 *.pyc
 data/dnd.db
+data/.secret_key
+data/app.log*
+data/*.jpeg
+data/*.xlsx
+*:Zone.Identifier
+scripts/node_modules/
+.superpowers/
+.pytest_cache/
