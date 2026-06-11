@@ -1,5 +1,9 @@
 import { api } from '/static/js/api.js';
 import { themeIcon } from '/static/js/icons.js';
+import {
+  ABILITY_NAMES, ABILITY_FULL, SPELLCASTING_ABILITY, RARITY_COLORS,
+  abilityMod, fmtBonus, escHtml, ordinalLabel, log,
+} from '/static/js/utils.js';
 
 const CLASSES = [
   { key: 'artificer', name: 'Artificer' },
@@ -111,9 +115,6 @@ const ALL_SKILLS = ['Acrobatics','Animal Handling','Arcana','Athletics','Decepti
 
 const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
 const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
-const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
-const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
-const SPELLCASTING_ABILITY = { artificer: 'int', bard: 'cha', cleric: 'wis', druid: 'wis', paladin: 'cha', ranger: 'wis', sorcerer: 'cha', warlock: 'cha', wizard: 'int' };
 const LEVEL_RANGE = Array.from({ length: 20 }, (_, i) => i + 1);
 
 let state = {
@@ -190,8 +191,7 @@ export async function renderSpellLibrary() {
 
   let allSpells = {};
   try {
-    const res = await fetch('/api/spells');
-    allSpells = await res.json();
+    allSpells = await api.getSpells();
   } catch (e) {
     document.getElementById('lib-body').innerHTML = `<div style="padding:24px;color:#888">Error loading spells</div>`;
     return;
@@ -275,8 +275,7 @@ export async function renderItemLibrary() {
 
   let allItems = {};
   try {
-    const res = await fetch('/api/items');
-    allItems = await res.json();
+    allItems = await api.getItems();
   } catch (e) {
     document.getElementById('il-body').innerHTML = `<div style="padding:24px;color:#888">Error loading items</div>`;
     return;
@@ -300,8 +299,7 @@ export async function renderItemLibrary() {
 
     document.getElementById('il-count').textContent = `${items.length} items`;
     document.getElementById('il-body').innerHTML = items.map(([, it]) => {
-      const rarityColors = { common: '#888', uncommon: '#2d7d46', rare: '#2a5a9e', 'very rare': '#8b3a9e', legendary: '#c97d2e', artifact: '#c93232' };
-      const color = rarityColors[(it.rarity || '').toLowerCase()] || '#888';
+      const color = RARITY_COLORS[(it.rarity || '').toLowerCase()] || '#888';
       const attune = it.attunement === 'Yes' ? ' <span style="font-size:9px;background:#555;color:#fff;padding:1px 4px;border-radius:3px">A</span>' : '';
       const cost = it.cost_gp != null ? `${it.cost_gp.toLocaleString()} gp` : '—';
       const props = [];
@@ -829,7 +827,7 @@ function renderStep5(body) {
     </div>
     ${levels.map(lvl => {
       const spells = grouped[lvl];
-      const label = lvl == 0 ? 'Cantrips' : ordinalLabelBuilder(lvl);
+      const label = lvl == 0 ? 'Cantrips' : ordinalLabel(lvl);
       const max = lvl == 0 ? cantripsMax : spellsMax;
       const sel = lvl == 0 ? cantripSel : spellSel;
       return `
@@ -844,12 +842,6 @@ function renderStep5(body) {
   `;
 }
 
-function ordinalLabelBuilder(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function cantripsAtLevel(lvl) {
   const table = { 1:2, 4:3, 10:4 };
   return table[Math.max(...Object.keys(table).map(Number).filter(k => k <= lvl))] || 2;
@@ -859,25 +851,6 @@ function roll4d6() {
   const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
   return rolls.sort((a, b) => a - b).slice(1).reduce((a, b) => a + b, 0);
 }
-function abilityMod(score) { return Math.floor((score - 10) / 2); }
-function fmtBonus(n) { return (n >= 0 ? '+' : '') + n; }
-function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function log(category, msg, data) {
-  const entry = { t: new Date().toISOString(), c: category, m: msg };
-  if (data) entry.d = data;
-  console.log(`[${category}] ${msg}`, data || '');
-  try { fetch('/api/log', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry) }); } catch(e) {}
-}
-window.toggleTheme = () => {
-  const cur = document.documentElement.getAttribute('data-theme');
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('dnd-theme', next);
-  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-    btn.innerHTML = themeIcon(next);
-  });
-};
-
 // Global handlers (called from onclick)
 window.state = state;
 window.prevStep = () => { state.step--; renderStep(); };

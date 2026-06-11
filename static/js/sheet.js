@@ -1,6 +1,10 @@
 import { api } from '/static/js/api.js';
 import { themeIcon } from '/static/js/icons.js';
 import {
+  ABILITY_NAMES, ABILITY_FULL, SPELLCASTING_ABILITY, RARITY_COLORS,
+  abilityMod, profBonus, fmtBonus, escHtml, ordinalLabel, log,
+} from '/static/js/utils.js';
+import {
   isAbilityToggleable,
   isRangedWeapon,
   resolveWeaponAbility,
@@ -29,8 +33,6 @@ const SKILLS = [
   { key: 'Stealth',         ability: 'dex', label: 'Stealth' },
   { key: 'Survival',        ability: 'wis', label: 'Survival' },
 ];
-
-const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
 
 const ARMORS = [
   { key: 'none',        name: 'Unarmored',      type: 'none',   base: 10, dex: true,  maxDex: null },
@@ -148,8 +150,6 @@ const COMMON_ITEMS = [
   { slug: 'com-component-pouch', name: 'Component Pouch', cost_gp: 25 },
 ];
 
-const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
-const SPELLCASTING_ABILITY = { artificer: 'int', bard: 'cha', cleric: 'wis', druid: 'wis', paladin: 'cha', ranger: 'wis', sorcerer: 'cha', warlock: 'cha', wizard: 'int' };
 function getTabs() {
   const hasSpells = spellData && Object.keys(spellData).length > 0;
   return hasSpells ? ['Stats', 'Combat', 'Spells', 'Inventory', 'Feats', 'World'] : ['Stats', 'Combat', 'Inventory', 'Feats', 'World'];
@@ -165,26 +165,7 @@ let editMode = false;
 let _expandedItems = {};
 let _worldAddType = null;
 
-function abilityMod(score) { return Math.floor((score - 10) / 2); }
-function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }
 function bardicInspirationMax() { return Math.max(1, abilityMod(char.ability_scores?.cha ?? 10)); }
-function fmtBonus(n) { return (n >= 0 ? '+' : '') + n; }
-function escHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function log(category, msg, data) {
-  const entry = { t: new Date().toISOString(), c: category, m: msg };
-  if (data) entry.d = data;
-  console.log(`[${category}] ${msg}`, data || '');
-  try { fetch('/api/log', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry) }); } catch(e) {}
-}
-window.toggleTheme = () => {
-  const cur = document.documentElement.getAttribute('data-theme');
-  const next = cur === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('dnd-theme', next);
-  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
-    btn.innerHTML = themeIcon(next);
-  });
-};
 
 function skillBonus(skillKey, skillAbility) {
   const mod = abilityMod(char.ability_scores[skillAbility]);
@@ -392,19 +373,6 @@ function renderCombat(el) {
   const weapons = char.weapons || [];
   const invWeapons = _invWeaponEntries();
   const subclassName = char.subclass_key && classData?.subclasses?.[char.subclass_key]?.name || '—';
-
-  function wRow(label, die, atkBonus, dmgBonus, typeLine, deletable) {
-    const dmg = `${die}${dmgBonus >= 0 ? '+' : ''}${dmgBonus}`;
-    return `<div class="weapon-row">
-      <div>
-        <div class="weapon-name">${label}</div>
-        <div style="font-size:12px;color:var(--text-dim)">${typeLine}</div>
-      </div>
-      <div class="weapon-atk">${atkBonus}</div>
-      <div class="weapon-dmg">${dmg}</div>
-      ${deletable ? `<button class="delete-btn" onclick="removeWeapon(${deletable})">×</button>` : ''}
-    </div>`;
-  }
 
   function invWeaponRow(it, idx) {
     const lib = it.slug ? (itemData || {})[it.slug] : findItemByName(it.name);
@@ -636,12 +604,6 @@ function renderSpells(el) {
   if (editMode) renderSpellPickerResults();
 }
 
-function ordinalLabel(n) {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
-
 function spellCard(s) {
   const levelLabel = s.level === 0 ? 'Cantrip' : `Lv ${s.level}`;
   const ritual = s.ritual ? ' <span class="spell-tag">R</span>' : '';
@@ -672,8 +634,6 @@ function findItemByName(name) {
   const key = Object.keys(itemData).find(k => itemData[k].name.toLowerCase() === name.toLowerCase());
   return key ? itemData[key] : null;
 }
-
-const RARITY_COLORS = { common: '#888', uncommon: '#2d7d46', rare: '#2a5a9e', 'very rare': '#8b3a9e', legendary: '#c97d2e', artifact: '#c93232' };
 
 let _itemPickerFilter = '';
 
@@ -1088,17 +1048,6 @@ window.deleteCurrentChar = async (id, name) => {
 window.adjustHp = (delta) => {
   const newHp = Math.min(char.hp_max, Math.max(0, char.hp_current + delta));
   save({ hp_current: newHp }).then(() => { render(); log('hp', `HP ${delta > 0 ? '+' : ''}${delta} → ${newHp}`); });
-};
-
-window.toggleSlot = (level, index) => {
-  const slots = JSON.parse(JSON.stringify(char.spell_slots));
-  const s = slots[level];
-  const used = s.used;
-  if (index < used) { s.used = index; }
-  else if (index === used && used < s.max) { s.used = used + 1; }
-  else { s.used = used > 0 ? used - 1 : 0; }
-  save({ spell_slots: slots }).then(() => renderActiveTab());
-  log('spell-slot', `Level ${level} slots: ${s.used}/${s.max}`);
 };
 
 window.restoreSlots = (level) => {
