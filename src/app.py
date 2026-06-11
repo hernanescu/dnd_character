@@ -278,6 +278,15 @@ def get_backgrounds():
     return jsonify(data)
 
 
+@app.route('/api/races')
+@login_required
+def get_races():
+    data = _load_json(os.path.join(_data_dir(), 'races.json'))
+    if data is None:
+        return jsonify({'error': 'not found'}), 404
+    return jsonify(data)
+
+
 @app.route('/api/characters', methods=['GET'])
 @login_required
 def list_characters():

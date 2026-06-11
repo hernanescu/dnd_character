@@ -17,6 +17,9 @@ def app(tmp_path):
         '{"cure-wounds": {"name": "Cure Wounds", "classes": ["cleric"]}}')
     (data_dir / 'items.json').write_text('{}')
     (data_dir / 'backgrounds.json').write_text('{}')
+    (data_dir / 'races.json').write_text(
+        '{"human": {"name": "Human", "category": "common", "speed": 30,'
+        ' "asi": {"str": 1}, "traits": []}}')
     flask_app.config.update(DB_PATH=str(db_path), DATA_DIR=str(data_dir), TESTING=True)
     with flask_app.app_context():
         init_db()

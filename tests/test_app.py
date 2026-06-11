@@ -48,9 +48,16 @@ def test_lucky_points_and_bardic_inspiration_persist(client):
 
 
 def test_data_endpoints_require_login(client):
-    for path in ('/api/spells', '/api/items', '/api/backgrounds', '/api/classes/bard'):
+    for path in ('/api/spells', '/api/items', '/api/backgrounds', '/api/classes/bard',
+                 '/api/races'):
         assert client.get(path).status_code == 401, path
     assert client.post('/api/log', json={}).status_code == 401
+
+
+def test_races_endpoint(client):
+    login(client)
+    races = client.get('/api/races').get_json()
+    assert races['human']['asi'] == {'str': 1}
 
 
 def test_stale_pre_auth_session_redirects_to_login(client):
