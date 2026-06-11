@@ -97,23 +97,18 @@ def init_db():
             supply INTEGER NOT NULL DEFAULT 5,
             stress INTEGER NOT NULL DEFAULT 5,
             choices TEXT NOT NULL DEFAULT '{}',
+            user_id INTEGER REFERENCES users(id),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ''')
     db.commit()
-    for col in ('momentum', 'supply', 'stress'):
+    for col in ('momentum INTEGER', 'supply INTEGER', 'stress INTEGER',
+                "choices TEXT NOT NULL DEFAULT '{}'", 'armor TEXT DEFAULT NULL',
+                'user_id INTEGER REFERENCES users(id)'):
         try:
-            db.execute(f'ALTER TABLE characters ADD COLUMN {col} INTEGER')
+            db.execute(f'ALTER TABLE characters ADD COLUMN {col}')
         except Exception:
             pass
-    try:
-        db.execute("ALTER TABLE characters ADD COLUMN choices TEXT NOT NULL DEFAULT '{}'")
-    except Exception:
-        pass
-    try:
-        db.execute("ALTER TABLE characters ADD COLUMN armor TEXT DEFAULT NULL")
-    except Exception:
-        pass
     db.commit()
 
 
@@ -258,7 +253,8 @@ def get_backgrounds():
 def list_characters():
     db = get_db()
     rows = db.execute(
-        'SELECT id, name, class_key, level FROM characters ORDER BY created_at DESC'
+        'SELECT id, name, class_key, level FROM characters '
+        'WHERE user_id = ? ORDER BY created_at DESC', (session['uid'],)
     ).fetchall()
     return jsonify([dict(r) for r in rows])
 
@@ -281,6 +277,7 @@ def create_character():
         'momentum': data.get('momentum', 0),
         'supply': data.get('supply', 5),
         'stress': data.get('stress', 5),
+        'user_id': session['uid'],
     }
     for f in _JSON_FIELDS:
         val = data.get(f)
@@ -297,7 +294,8 @@ def create_character():
 @login_required
 def get_character(char_id):
     db = get_db()
-    row = db.execute('SELECT * FROM characters WHERE id = ?', (char_id,)).fetchone()
+    row = db.execute('SELECT * FROM characters WHERE id = ? AND user_id = ?',
+                     (char_id, session['uid'])).fetchone()
     if not row:
         return jsonify({'error': 'not found'}), 404
     return jsonify(_row_to_character(row))
@@ -308,7 +306,8 @@ def get_character(char_id):
 def update_character(char_id):
     data = request.get_json()
     db = get_db()
-    if not db.execute('SELECT id FROM characters WHERE id = ?', (char_id,)).fetchone():
+    if not db.execute('SELECT id FROM characters WHERE id = ? AND user_id = ?',
+                      (char_id, session['uid'])).fetchone():
         return jsonify({'error': 'not found'}), 404
     updates = {}
     for key, val in data.items():
@@ -325,7 +324,8 @@ def update_character(char_id):
 @login_required
 def delete_character(char_id):
     db = get_db()
-    row = db.execute('SELECT id FROM characters WHERE id = ?', (char_id,)).fetchone()
+    row = db.execute('SELECT id FROM characters WHERE id = ? AND user_id = ?',
+                     (char_id, session['uid'])).fetchone()
     if not row:
         return jsonify({'error': 'not found'}), 404
     db.execute('DELETE FROM characters WHERE id = ?', (char_id,))
