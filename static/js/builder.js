@@ -337,7 +337,7 @@ window.deleteChar = async (id, name) => {
 
 export async function initBuilder() {
   state = {
-    step: 1, name: '', classKey: 'bard', level: 1, race: '',
+    step: 1, name: '', classKey: 'bard', level: 1, hpMethod: 'average', race: '',
     abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
     abilityMode: 'array',
     background: '', bgFilter: 'all', classSkills: [], racialSkills: [], expertise: [], subclass: '', choices: {}, flexAsiChoices: [],
