@@ -56,6 +56,7 @@ let state = {
   name: '',
   classKey: 'bard',
   level: 1,
+  hpMethod: 'average',
   race: '',
   abilityAssign: { str: null, dex: null, con: null, int: null, wis: null, cha: null },
   abilityMode: 'array',
@@ -906,6 +907,10 @@ function roll4d6() {
   const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
   return rolls.sort((a, b) => a - b).slice(1).reduce((a, b) => a + b, 0);
 }
+
+function rollDie(sides) {
+  return Math.floor(Math.random() * sides) + 1;
+}
 // Global handlers (called from onclick)
 window.state = state;
 window.prevStep = () => { state.step--; renderStep(); };
@@ -932,6 +937,7 @@ window.selectClass = async (k) => {
   renderStep();
 };
 window.selectLevel = (l) => { state.level = l; renderStep(); };
+window.selectHpMethod = (m) => { state.hpMethod = m; renderStep(); };
 window.selectRace = (k) => {
   state.race = k; state.flexAsiChoices = []; state.racialSkills = [];
   state.flexMode = '21'; state.flexPlus2 = null; state.flexPlus1 = null;
