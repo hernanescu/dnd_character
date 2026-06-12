@@ -1044,7 +1044,12 @@ window.finishBuilder = async () => {
   const profBonus = Math.floor((level - 1) / 4) + 2;
   const conMod = abilityMod(scores.con);
   const hitDie = state.classData.hit_die;
-  const hpMax = hitDie + conMod + (level > 1 ? (Math.floor(hitDie / 2) + 1 + conMod) * (level - 1) : 0);
+  let hpMax = hitDie + conMod; // level 1: always max hit die + CON (RAW)
+  for (let lvl = 2; lvl <= level; lvl++) {
+    if (state.hpMethod === 'max') hpMax += hitDie + conMod;
+    else if (state.hpMethod === 'random') hpMax += rollDie(hitDie) + conMod;
+    else hpMax += Math.floor(hitDie / 2) + 1 + conMod; // average (default)
+  }
   const dexMod = abilityMod(scores.dex);
   const ac = 10 + dexMod;
 
