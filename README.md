@@ -35,6 +35,7 @@ node scripts/test_combat_utils.mjs     # weapon math (pure)
 node scripts/test_choices.mjs
 node scripts/test_combat_display.mjs
 node scripts/test_races.mjs            # builder race flow: flexible ASI, granted skills
+node scripts/test_feats.mjs            # feats: sheet picker + ASI apply, variant human bonus feat
 ```
 
 ## Project layout
@@ -50,6 +51,7 @@ data/classes/*.json     13 classes (features, subclasses, slots) — scraped
 data/spells.json        562 spells, slug-keyed — scraped
 data/backgrounds.json   93 backgrounds — scraped
 data/races.json         41 races (Common + Exotic lineages) — scraped
+data/feats.json         90 official feats (half-feat ASI parsed) — scraped
 data/items.json         962 magic items (from dnd_pricing.xlsx)
 scripts/                Scrapers, converters, test suites
 docs/next-session.md    Working notes: pending tasks, gotchas
@@ -61,6 +63,7 @@ docs/code-review-*.md   Review findings
 ```bash
 python3 scripts/scrape_class.py <class>   # class page + subclasses + its spells
 python3 scripts/scrape_races.py           # Common + Exotic races ("species" on the site)
+python3 scripts/scrape_feats.py           # official feats (skips UA/Homebrew)
 python3 scripts/scrape_backgrounds.py     # all backgrounds
 python3 scripts/scrape_choices.py         # feature choices (fighting styles, invocations…)
 python3 scripts/convert_items.py          # data/dnd_pricing.xlsx → items.json

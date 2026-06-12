@@ -46,8 +46,19 @@ Button to save current HP/resource state as a snapshot and restore later.
 Races are now scraped (`scripts/scrape_races.py` → `data/races.json`, served at `/api/races`).
 Sheet shows real walking speed and racial traits; builder applies ASI (incl. MPMM flexible
 +2/+1 or +1/+1/+1) and granted skills. Remaining race gaps: traits with mechanical effects
-beyond ASI/skills/speed (Dwarven Toughness +1 HP/level, innate spells, variant human's
-bonus feat) are displayed as text, not auto-applied.
+beyond ASI/skills/speed (Dwarven Toughness +1 HP/level, innate spells) are displayed as
+text, not auto-applied. ~~Variant human's bonus feat~~ — applied since 2026-06-12 (see §6).
+
+### 6. Feats — DONE 2026-06-12
+90 official feats scraped (`scripts/scrape_feats.py` → `data/feats.json`, `/api/feats`;
+skips UA/Homebrew). Characters persist a `feats` column: `[{key, ability?, applied?}]`.
+Sheet Feats tab has a searchable picker; half-feats prompt for an ability and apply the
++1 to `ability_scores` (capped at 20 — the exact delta is stored as `applied` so removal
+rolls back precisely). Builder: variant human must pick a bonus feat (+ ability if it's a
+half-feat); the bonus feeds final scores and the feat is saved on the new character.
+Tests: `scripts/test_feats.mjs` (31 checks). Known limitation: feats' non-ASI mechanics
+(Lucky points, Tough HP, granted spells/proficiencies) are reference text, not auto-applied
+— same policy as class features and racial traits.
 
 ## How to run
 ```bash
