@@ -4,6 +4,8 @@ export const ABILITY_NAMES = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', w
 export const ABILITY_FULL = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
 export const SPELLCASTING_ABILITY = { artificer: 'int', bard: 'cha', cleric: 'wis', druid: 'wis', paladin: 'cha', ranger: 'wis', sorcerer: 'cha', warlock: 'cha', wizard: 'int' };
 export const RARITY_COLORS = { common: '#888', uncommon: '#2d7d46', rare: '#2a5a9e', 'very rare': '#8b3a9e', legendary: '#c97d2e', artifact: '#c93232' };
+export const XP_THRESHOLDS = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
+// index 0 = Level 1 threshold ... index 19 = Level 20 threshold
 
 export function abilityMod(score) { return Math.floor((score - 10) / 2); }
 export function profBonus(level) { return Math.floor((level - 1) / 4) + 2; }

@@ -1,7 +1,7 @@
 import { api } from '/static/js/api.js';
 import { themeIcon } from '/static/js/icons.js';
 import {
-  ABILITY_NAMES, ABILITY_FULL, SPELLCASTING_ABILITY, RARITY_COLORS,
+  ABILITY_NAMES, ABILITY_FULL, SPELLCASTING_ABILITY, RARITY_COLORS, XP_THRESHOLDS,
   abilityMod, fmtBonus, escHtml, ordinalLabel, log,
 } from '/static/js/utils.js';
 import { maxPreparedSpells, cantripsKnown, maxSpellLevel } from '/static/js/spell-rules.js';
@@ -1068,6 +1068,7 @@ window.finishBuilder = async () => {
     class_key: state.classKey,
     subclass_key: state.subclass || null,
     level,
+    xp: XP_THRESHOLDS[level - 1],
     race: state.race,
     background: state.background,
     ability_scores: scores,
