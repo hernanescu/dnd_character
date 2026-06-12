@@ -49,7 +49,7 @@ _JSON_FIELDS = {
 _SCALAR_FIELDS = {
     'name', 'class_key', 'subclass_key', 'level', 'race', 'background',
     'hp_max', 'hp_current', 'ac', 'momentum', 'supply', 'stress',
-    'lucky_points', 'bardic_inspiration',
+    'lucky_points', 'bardic_inspiration', 'xp',
 }
 
 
@@ -136,7 +136,8 @@ def init_db():
                 "choices TEXT NOT NULL DEFAULT '{}'", 'armor TEXT DEFAULT NULL',
                 'user_id INTEGER REFERENCES users(id)',
                 'lucky_points INTEGER', 'bardic_inspiration INTEGER',
-                "feats TEXT NOT NULL DEFAULT '[]'"):
+                "feats TEXT NOT NULL DEFAULT '[]'",
+                'xp INTEGER NOT NULL DEFAULT 0'):
         try:
             db.execute(f'ALTER TABLE characters ADD COLUMN {col}')
         except Exception:
@@ -327,6 +328,7 @@ def create_character():
         'momentum': data.get('momentum', 0),
         'supply': data.get('supply', 5),
         'stress': data.get('stress', 5),
+        'xp': data.get('xp', 0),
         'user_id': session['uid'],
     }
     for f in _JSON_FIELDS:

@@ -88,6 +88,20 @@ def test_stale_pre_auth_session_redirects_to_login(client):
     assert r.status_code == 302 and '/login' in r.headers['Location']
 
 
+def test_new_character_has_zero_xp(client):
+    login(client)
+    cid = _mk(client)
+    assert client.get(f'/api/characters/{cid}').get_json()['xp'] == 0
+
+
+def test_xp_persists(client):
+    login(client)
+    cid = _mk(client)
+    r = client.put(f'/api/characters/{cid}', json={'xp': 6500})
+    assert r.status_code == 200
+    assert client.get(f'/api/characters/{cid}').get_json()['xp'] == 6500
+
+
 def test_spells_filter_by_class(client):
     login(client)
     assert 'cure-wounds' in client.get('/api/spells?class=cleric').get_json()
