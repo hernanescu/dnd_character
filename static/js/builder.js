@@ -464,6 +464,12 @@ function renderStep1(body) {
     <div class="pills">${CLASSES.map(c => `<div class="pill${state.classKey === c.key ? ' selected' : ''}" onclick="selectClass('${c.key}')">${c.name}</div>`).join('')}</div>
     <div class="field-label" style="margin-top:12px">Level</div>
     <div class="pills">${LEVEL_RANGE.map(l => `<div class="pill${state.level === l ? ' selected' : ''}" onclick="selectLevel(${l})">${l}</div>`).join('')}</div>
+    <div class="field-label" style="margin-top:12px">Hit Points</div>
+    <div class="pills">
+      <div class="pill${state.hpMethod === 'average' ? ' selected' : ''}" onclick="selectHpMethod('average')">Average</div>
+      <div class="pill${state.hpMethod === 'max' ? ' selected' : ''}" onclick="selectHpMethod('max')">Max</div>
+      <div class="pill${state.hpMethod === 'random' ? ' selected' : ''}" onclick="selectHpMethod('random')">Random</div>
+    </div>
     <div class="field-label" style="margin-top:12px">Race</div>
     ${racePills(common)}
     <div class="field-label" style="margin-top:8px;color:var(--text-dim)">Exotic</div>
