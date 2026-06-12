@@ -118,6 +118,17 @@ body {
 .stat-pill-val { font-size:14px;font-weight:700;opacity:1; }
 .stat-pill-hp { background:rgba(0,0,0,0.18); }
 
+/* ── XP BAR ─────────────────────────────────────────────── */
+.xp-bar-wrap { margin-top: 8px; cursor: pointer; }
+.xp-bar-label { font-size: 9px; color: rgba(229,223,211,0.65); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
+.xp-bar { height: 6px; background: rgba(255,255,255,0.12); border-radius: 3px; overflow: hidden; }
+.xp-bar-fill { height: 100%; background: rgba(255,255,255,0.5); border-radius: 3px; }
+.xp-bar-fill.ready { background: #c9a44c; }
+.xp-editor-popup { margin-top: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px; display: flex; gap: 6px; }
+.xp-editor-btn { flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: inherit; border-radius: 5px; padding: 8px 6px; font-size: 11px; text-align: center; font-family: var(--font-body); cursor: pointer; }
+.xp-editor-btn:hover { background: rgba(255,255,255,0.16); }
+.xp-editor-icon { font-size: 14px; font-weight: 700; display: block; margin-bottom: 2px; }
+
 /* ── RESOURCE BAR ────────────────────────────────────────── */
 .resource-bar {
   display: flex; border-bottom: 1px solid var(--border);

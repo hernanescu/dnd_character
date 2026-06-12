@@ -2,7 +2,7 @@ import { api } from '/static/js/api.js';
 import { themeIcon } from '/static/js/icons.js';
 import {
   ABILITY_NAMES, ABILITY_FULL, SPELLCASTING_ABILITY, RARITY_COLORS,
-  abilityMod, profBonus, fmtBonus, escHtml, ordinalLabel, log,
+  abilityMod, profBonus, fmtBonus, escHtml, ordinalLabel, log, XP_THRESHOLDS,
 } from '/static/js/utils.js';
 import {
   isAbilityToggleable,
@@ -164,6 +164,7 @@ let bgData = null;
 let itemData = null;
 let activeTab = 0;
 let editMode = false;
+let xpEditorOpen = false;
 let _expandedItems = {};
 let _worldAddType = null;
 let _pendingFeatKey = null;
@@ -243,6 +244,7 @@ function render() {
   const acVal = computeAC();
   const ppVal = 10 + skillBonus('Perception', 'wis');
   const hpPct = char.hp_current / char.hp_max;
+  const xpInfo = xpBarInfo(char.level, char.xp ?? 0);
   app.innerHTML = `
     <div class="app-header">
       <div style="flex:1;min-width:0">
@@ -261,6 +263,15 @@ function render() {
           </div>
         </div>
         <div class="char-meta">${raceData ? `${escHtml(raceData.name)} ` : ''}${clsName}${char.subclass_key ? ` · ${escHtml(char.subclass_key)}` : ''} · Level ${char.level} · ${escHtml(char.background_name)}</div>
+        <div class="xp-bar-wrap" onclick="toggleXpEditor()">
+          <div class="xp-bar-label">${xpInfo.label}</div>
+          <div class="xp-bar"><div class="xp-bar-fill${xpInfo.ready ? ' ready' : ''}" style="width:${xpInfo.pct}%"></div></div>
+          ${xpEditorOpen ? `
+          <div class="xp-editor-popup" onclick="event.stopPropagation()">
+            <div class="xp-editor-btn" onclick="addXp()"><span class="xp-editor-icon">+</span>Add XP</div>
+            <div class="xp-editor-btn" onclick="setXpTotal()"><span class="xp-editor-icon">=</span>Set Total</div>
+          </div>` : ''}
+        </div>
       </div>
     </div>
     <div class="resource-bar">
@@ -565,6 +576,18 @@ function inspirationDieByLevel(level) {
   if (level >= 10) return 'd10';
   if (level >= 5) return 'd8';
   return 'd6';
+}
+
+function xpBarInfo(level, xp) {
+  if (level >= 20) {
+    return { label: `${xp.toLocaleString('en-US')} XP`, pct: 100, ready: false };
+  }
+  const cur = XP_THRESHOLDS[level - 1];
+  const next = XP_THRESHOLDS[level];
+  const pct = Math.min(100, Math.max(0, ((xp - cur) / (next - cur)) * 100));
+  const ready = xp >= next;
+  const label = `${xp.toLocaleString('en-US')} / ${next.toLocaleString('en-US')} XP${ready ? ' — Ready to level up!' : ''}`;
+  return { label, pct, ready };
 }
 
 let expandedLevels = {};
@@ -1143,6 +1166,26 @@ window.openHpEditor = () => {
   if (val !== null && !isNaN(+val)) {
     save({ hp_current: Math.min(char.hp_max, Math.max(0, +val)) }).then(render);
   }
+};
+
+window.toggleXpEditor = () => { xpEditorOpen = !xpEditorOpen; render(); };
+
+window.addXp = () => {
+  const val = prompt('Add XP:');
+  xpEditorOpen = false;
+  if (val !== null && !isNaN(+val) && +val !== 0) {
+    const newXp = Math.max(0, (char.xp ?? 0) + Math.trunc(+val));
+    save({ xp: newXp }).then(() => { render(); log('xp', `XP +${Math.trunc(+val)} → ${newXp}`); });
+  } else render();
+};
+
+window.setXpTotal = () => {
+  const val = prompt('Set total XP:', char.xp ?? 0);
+  xpEditorOpen = false;
+  if (val !== null && !isNaN(+val)) {
+    const newXp = Math.max(0, Math.trunc(+val));
+    save({ xp: newXp }).then(() => { render(); log('xp', `XP set → ${newXp}`); });
+  } else render();
 };
 window.deleteCurrentChar = async (id, name) => {
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
