@@ -140,6 +140,8 @@ def parse_traits_meta(traits):
         m = re.search(r'proficiency in (one|two) skills? of your choice', d)
         if m:
             meta['bonusSkills'] = {'count': WORD_NUM[m.group(1)]}
+        if re.search(r'you gain one feat of your choice', d):  # variant human
+            meta['bonusFeat'] = True
     return meta
 
 
@@ -231,6 +233,8 @@ def parse_lineage(slug, category):
             entry['skills'] = meta['skills']
         if meta.get('bonusSkills'):
             entry['bonusSkills'] = meta['bonusSkills']
+        if meta.get('bonusFeat'):
+            entry['bonusFeat'] = True
         if subrace_of:
             entry['subrace_of'] = subrace_of
         return entry

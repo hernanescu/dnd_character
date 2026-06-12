@@ -14,6 +14,7 @@ export const api = {
   getClass: (key) => apiFetch(`/api/classes/${key}`),
   getBackgrounds: () => apiFetch('/api/backgrounds'),
   getRaces: () => apiFetch('/api/races'),
+  getFeats: () => apiFetch('/api/feats'),
   getSpells: (classKey) => apiFetch(classKey ? `/api/spells?class=${classKey}` : '/api/spells'),
   getItems: () => apiFetch('/api/items'),
   getCharacters: () => apiFetch('/api/characters'),

@@ -27,6 +27,11 @@ const CLASSES = [
 //            flexible_asi, traits:[{name,desc}], skills, bonusSkills }
 let RACES = [];
 
+// Loaded from /api/feats (scraped from dnd5e.wikidot.com feat pages).
+// Entries: { key, name, category, desc, benefits, prerequisite,
+//            asi: { choices: ['str',...] | 'any', points } }
+let FEATS = [];
+
 // Background source categories
 const BG_SOURCES = {
   'PHB': ['acolyte','charlatan','criminal','entertainer','folk-hero','guild-artisan','hermit','noble','outlander','sage','sailor','soldier','urchin'],
@@ -336,15 +341,18 @@ export async function initBuilder() {
     abilityMode: 'array',
     background: '', bgFilter: 'all', classSkills: [], racialSkills: [], expertise: [], subclass: '', choices: {}, flexAsiChoices: [],
     flexMode: '21', flexPlus2: null, flexPlus1: null,
+    bonusFeatKey: null, bonusFeatAbility: null,
     cantrips: [], spells: [], classData: null, backgroundsData: null, spellData: null, spellFilter: '',
   };
   window.state = state;
   try {
-    let racesData;
-    [state.classData, state.backgroundsData, state.spellData, racesData] = await Promise.all([
-      api.getClass(state.classKey), api.getBackgrounds(), api.getSpells(state.classKey), api.getRaces(),
+    let racesData, featsData;
+    [state.classData, state.backgroundsData, state.spellData, racesData, featsData] = await Promise.all([
+      api.getClass(state.classKey), api.getBackgrounds(), api.getSpells(state.classKey), api.getRaces(), api.getFeats(),
     ]);
     RACES = Object.entries(racesData).map(([key, r]) => ({ key, ...r }));
+    FEATS = Object.entries(featsData).map(([key, f]) => ({ key, ...f }))
+      .sort((a, b) => a.name.localeCompare(b.name));
   } catch (e) {
     document.getElementById('app').innerHTML = `<div style="padding:24px;color:#888">Error loading data</div>`;
     return;
@@ -414,6 +422,21 @@ function racialBonusFor(ab) {
     else b += (state.flexPlus2 === ab ? 2 : 0) + (state.flexPlus1 === ab ? 1 : 0);
   }
   return b;
+}
+
+function currentBonusFeat() {
+  return FEATS.find(f => f.key === state.bonusFeatKey);
+}
+
+// +1 from a half-feat picked as the variant human bonus feat.
+function featBonusFor(ab) {
+  const feat = currentBonusFeat();
+  return feat?.asi && state.bonusFeatAbility === ab ? feat.asi.points : 0;
+}
+
+// All ability bonuses applied at creation time: racial ASI + bonus feat.
+function creationBonusFor(ab) {
+  return racialBonusFor(ab) + featBonusFor(ab);
 }
 
 function raceAsiSummary(race) {
@@ -504,6 +527,27 @@ function renderStep2(body) {
     </div>`;
   }
 
+  let featPicker = '';
+  if (race?.bonusFeat) {
+    const feat = currentBonusFeat();
+    const abilityChoices = feat?.asi
+      ? (feat.asi.choices === 'any' ? ABILITIES : feat.asi.choices) : [];
+    featPicker = `
+    <div style="margin-bottom:12px;padding:10px;background:var(--gray-bg);border-radius:6px">
+      <div class="field-label" style="margin-bottom:6px">${escHtml(race.name)} bonus feat</div>
+      <select class="input-field input-sm" style="width:100%" onchange="selectBonusFeat(this.value)">
+        <option value="">— choose a feat —</option>
+        ${FEATS.map(f => `<option value="${f.key}" ${state.bonusFeatKey === f.key ? 'selected' : ''}>${escHtml(f.name)}${f.asi ? ` (+${f.asi.points} ability)` : ''}</option>`).join('')}
+      </select>
+      ${feat ? `
+      ${feat.prerequisite ? `<div style="font-size:10px;color:var(--text-dim);font-style:italic;margin-top:6px">Prerequisite: ${escHtml(feat.prerequisite)}</div>` : ''}
+      <div style="font-size:11px;color:var(--text-dim);margin-top:6px">${escHtml(feat.desc || feat.benefits?.[0] || '')}</div>
+      ${feat.asi ? `
+      <div class="field-label" style="margin-top:8px">+${feat.asi.points} to</div>
+      <div class="pills">${abilityChoices.map(ab => `<div class="pill${state.bonusFeatAbility === ab ? ' selected' : ''}" onclick="setBonusFeatAbility('${ab}')">${ABILITY_NAMES[ab]}</div>`).join('')}</div>` : ''}` : ''}
+    </div>`;
+  }
+
   body.innerHTML = `
     <div class="step-title">Ability Scores</div>
     <div class="pills" style="margin-bottom:12px">
@@ -512,11 +556,12 @@ function renderStep2(body) {
       <div class="pill${mode === 'roll' ? ' selected' : ''}" onclick="setAbilityMode('roll')">Roll</div>
     </div>
     ${flexPicker}
+    ${featPicker}
     ${mode === 'array' ? `
     <div class="step-sub">Assign standard array (${STANDARD_ARRAY.join(', ')}). Racial bonuses apply automatically.</div>
     <div class="ability-assign-grid">
       ${ABILITIES.map(ab => {
-        const rb = racialBonusFor(ab);
+        const rb = creationBonusFor(ab);
         const currentVal = state.abilityAssign[ab];
         const usedValues = Object.values(state.abilityAssign).filter(v => v !== null);
         const options = STANDARD_ARRAY.map(v => {
@@ -535,7 +580,7 @@ function renderStep2(body) {
     <div class="step-sub">Enter scores directly (3–20). Racial bonuses apply automatically.</div>
     <div class="ability-assign-grid">
       ${ABILITIES.map(ab => {
-        const rb = racialBonusFor(ab);
+        const rb = creationBonusFor(ab);
         const v = state.abilityAssign[ab];
         return `<div class="ability-assign-row">
           <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
@@ -547,7 +592,7 @@ function renderStep2(body) {
     <div class="step-sub">Click <strong>Roll All</strong> to generate scores (4d6 drop lowest). Reroll individually with ↺.</div>
     <div class="ability-assign-grid">
       ${ABILITIES.map(ab => {
-        const rb = racialBonusFor(ab);
+        const rb = creationBonusFor(ab);
         const v = state.abilityAssign[ab];
         return `<div class="ability-assign-row">
           <div class="ability-assign-label">${ABILITY_NAMES[ab]}</div>
@@ -562,7 +607,7 @@ function renderStep2(body) {
       <button class="btn btn-primary" onclick="rollAll()" style="margin-top:8px;width:100%">Roll All</button>`}
     ${allAssigned ? `
       <div style="padding:10px;background:var(--gray-bg);border-radius:4px;font-size:11px;margin-top:8px">
-        Final: ${ABILITIES.map(ab => `<b>${ABILITY_NAMES[ab]}</b> ${(state.abilityAssign[ab]||0)+racialBonusFor(ab)}`).join(' · ')}
+        Final: ${ABILITIES.map(ab => `<b>${ABILITY_NAMES[ab]}</b> ${(state.abilityAssign[ab]||0)+creationBonusFor(ab)}`).join(' · ')}
       </div>` : ''}
   `;
 }
@@ -757,7 +802,7 @@ function renderStep4(body) {
 
 function builderCastingMod() {
   const castingAb = state.classData.spellcasting_ability || SPELLCASTING_ABILITY[state.classKey];
-  const score = (state.abilityAssign[castingAb] || 10) + racialBonusFor(castingAb);
+  const score = (state.abilityAssign[castingAb] || 10) + creationBonusFor(castingAb);
   return { castingAb, castingMod: abilityMod(score) };
 }
 
@@ -890,8 +935,14 @@ window.selectLevel = (l) => { state.level = l; renderStep(); };
 window.selectRace = (k) => {
   state.race = k; state.flexAsiChoices = []; state.racialSkills = [];
   state.flexMode = '21'; state.flexPlus2 = null; state.flexPlus1 = null;
+  state.bonusFeatKey = null; state.bonusFeatAbility = null;
   renderStep();
 };
+window.selectBonusFeat = (k) => {
+  state.bonusFeatKey = k || null; state.bonusFeatAbility = null;
+  renderStep();
+};
+window.setBonusFeatAbility = (ab) => { state.bonusFeatAbility = ab; renderStep(); };
 window.toggleFlexAsi = (ab) => {
   const race = currentRace();
   const max = race?.flexAsi ? race.flexAsi.count : (race?.flexible_asi ? 3 : 0);
@@ -975,7 +1026,7 @@ window.finishBuilder = async () => {
   if (!validateStep()) return;
   const scores = {};
   for (const ab of ABILITIES) {
-    scores[ab] = (state.abilityAssign[ab] || 10) + racialBonusFor(ab);
+    scores[ab] = (state.abilityAssign[ab] || 10) + creationBonusFor(ab);
   }
   const level = state.level;
   const profBonus = Math.floor((level - 1) / 4) + 2;
@@ -1014,6 +1065,13 @@ window.finishBuilder = async () => {
     supply: 5,
     stress: 5,
     choices: state.choices,
+    feats: state.bonusFeatKey ? [{
+      key: state.bonusFeatKey,
+      ...(state.bonusFeatAbility ? {
+        ability: state.bonusFeatAbility,
+        applied: currentBonusFeat().asi.points,
+      } : {}),
+    }] : [],
     features: [],
     weapons: [],
     inventory: [],
@@ -1056,6 +1114,14 @@ function validateStep() {
       }
       if (state.flexMode !== '111' && (!state.flexPlus2 || !state.flexPlus1)) {
         alert('Choose which abilities get your racial +2 and +1.'); return false;
+      }
+    }
+    if (race?.bonusFeat) {
+      if (!state.bonusFeatKey) {
+        alert(`Choose a bonus feat for ${race.name}.`); return false;
+      }
+      if (currentBonusFeat()?.asi && !state.bonusFeatAbility) {
+        alert('Choose which ability gets your feat bonus.'); return false;
       }
     }
   }

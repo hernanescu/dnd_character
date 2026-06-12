@@ -158,6 +158,7 @@ function getTabs() {
 let char = null;
 let classData = null;
 let raceData = null;
+let featsData = null;
 let spellData = null;
 let bgData = null;
 let itemData = null;
@@ -165,6 +166,7 @@ let activeTab = 0;
 let editMode = false;
 let _expandedItems = {};
 let _worldAddType = null;
+let _pendingFeatKey = null;
 
 function bardicInspirationMax() { return Math.max(1, abilityMod(char.ability_scores?.cha ?? 10)); }
 
@@ -197,8 +199,8 @@ export async function initSheet(id) {
   try {
     const charData = await api.getCharacter(id);
     let racesData;
-    [char, classData, spellData, bgData, itemData, racesData] = await Promise.all([
-      charData, api.getClass(charData.class_key), api.getSpells(charData.class_key), api.getBackgrounds(), api.getItems(), api.getRaces(),
+    [char, classData, spellData, bgData, itemData, racesData, featsData] = await Promise.all([
+      charData, api.getClass(charData.class_key), api.getSpells(charData.class_key), api.getBackgrounds(), api.getItems(), api.getRaces(), api.getFeats(),
     ]);
     raceData = racesData[char.race] || null;
     char.background_name = (bgData[char.background] || {}).name || char.background;
@@ -995,6 +997,8 @@ function renderFeats(el) {
     html += raceData.traits.map(t => featHtml(t.name, t.desc)).join('');
   }
 
+  html += renderFeatSection();
+
   if (manualFeats.length) {
     html += `<div class="section-title">Additional Features</div>`;
     html += manualFeats.map((f, i) => {
@@ -1022,6 +1026,79 @@ function renderFeats(el) {
     </div>`;
   }
   el.innerHTML = html;
+  if (editMode) renderFeatPickerResults();
+}
+
+function featBodyHtml(f) {
+  if (!f) return '';
+  let html = '';
+  if (f.prerequisite) html += `<div style="font-style:italic;margin-bottom:4px"><b>Prerequisite:</b> ${escHtml(f.prerequisite)}</div>`;
+  if (f.desc) html += `<div>${escHtml(f.desc)}</div>`;
+  if (f.benefits?.length) html += f.benefits.map(b => `<div style="margin-top:4px">• ${escHtml(b)}</div>`).join('');
+  return html;
+}
+
+function renderFeatSection() {
+  const taken = char.feats || [];
+  let html = `<div class="section-title">Feats</div>`;
+  html += taken.map((entry, i) => {
+    const f = featsData?.[entry.key];
+    const name = f?.name || entry.key;
+    const tag = entry.ability ? ` (+${entry.applied ?? f?.asi?.points ?? 1} ${entry.ability.toUpperCase()})` : '';
+    const body = featBodyHtml(f);
+    return `<div class="feat-card" onclick="this.classList.toggle('expanded')">
+      <div class="feat-name-row">
+        <span class="feat-name">${escHtml(name)}${tag}</span>
+        ${body ? '<span class="feat-arrow">▸</span>' : ''}
+      </div>
+      ${body ? `<div class="feat-desc">${body}</div>` : ''}
+      ${editMode ? `<button class="delete-btn" onclick="event.stopPropagation();removeCharFeat(${i})">×</button>` : ''}
+    </div>`;
+  }).join('');
+  if (!taken.length && !editMode) {
+    html += '<div style="font-size:11px;color:#888;padding:2px 0 8px">No feats yet — tap ✏ Edit to add one.</div>';
+  }
+  if (editMode) {
+    const pending = _pendingFeatKey && featsData?.[_pendingFeatKey];
+    if (pending) {
+      const choices = pending.asi.choices === 'any'
+        ? Object.keys(ABILITY_NAMES) : pending.asi.choices;
+      html += `<div style="padding:10px 12px;background:var(--gray-bg);border-radius:6px;margin-bottom:8px">
+        <div style="font-size:12px;margin-bottom:6px"><b>${escHtml(pending.name)}</b> — apply +${pending.asi.points} to which ability?</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${choices.map(ab => `<div class="pill" onclick="chooseFeatAbility('${ab}')">${ab.toUpperCase()}</div>`).join('')}
+          <div class="pill" onclick="cancelFeatPick()" style="opacity:.6">Cancel</div>
+        </div>
+      </div>`;
+    } else {
+      html += `
+      <input class="input-field" id="feat-search" placeholder="Search feats…" oninput="filterFeatPicker()" style="width:100%;margin-bottom:6px">
+      <div id="feat-results" style="max-height:220px;overflow-y:auto;margin-bottom:12px"></div>`;
+    }
+  }
+  return html;
+}
+
+function renderFeatPickerResults() {
+  const q = (document.getElementById('feat-search')?.value || '').toLowerCase();
+  const results = document.getElementById('feat-results');
+  if (!results || !featsData) return;
+  const taken = new Set((char.feats || []).map(f => f.key));
+  const entries = Object.entries(featsData)
+    .filter(([k]) => !taken.has(k))
+    .filter(([, f]) => !q || f.name.toLowerCase().includes(q))
+    .sort((a, b) => a[1].name.localeCompare(b[1].name))
+    .slice(0, 40);
+  results.innerHTML = entries.map(([k, f]) => {
+    const half = f.asi ? `<span class="spell-level-badge" style="font-size:8px;flex-shrink:0">+${f.asi.points}</span>` : '';
+    const prereq = f.prerequisite ? `<span style="font-size:10px;color:var(--text-dim);font-style:italic">Req: ${escHtml(f.prerequisite)}</span>` : '';
+    return `<div class="sp-result-row" data-feat-key="${escHtml(k)}" onclick="pickFeat(this.dataset.featKey)" title="${escHtml(f.desc || (f.benefits || []).join(' '))}">
+      ${half}
+      <span style="font-size:12px;font-weight:600;margin:0 6px">${escHtml(f.name)}</span>
+      ${prereq}
+    </div>`;
+  }).join('');
+  if (!entries.length) results.innerHTML = '<div style="font-size:11px;color:#888;padding:4px">No feats found.</div>';
 }
 
 function renderWorld(el) {
@@ -1340,6 +1417,52 @@ window.toggleSheetChoice = (featName, optName, limit) => {
   if (i >= 0) arr.splice(i, 1);
   else if (arr.length < limit) arr.push(optName);
   save({ choices }).then(() => renderActiveTab());
+};
+
+function addCharFeat(key, ability) {
+  const f = featsData?.[key];
+  if (!f) return;
+  const entry = { key };
+  const patch = { feats: [...(char.feats || []), entry] };
+  if (ability && f.asi) {
+    const scores = { ...char.ability_scores };
+    const cur = scores[ability] ?? 10;
+    entry.ability = ability;
+    entry.applied = Math.min(20, cur + f.asi.points) - cur;  // 20 cap
+    scores[ability] = cur + entry.applied;
+    patch.ability_scores = scores;
+  }
+  _pendingFeatKey = null;
+  save(patch).then(() => renderActiveTab());
+  log('feat', `Added feat: ${f.name}${ability ? ` (+${entry.applied} ${ability.toUpperCase()})` : ''}`);
+}
+
+window.pickFeat = (key) => {
+  const f = featsData?.[key];
+  if (!f) return;
+  if (f.asi) { _pendingFeatKey = key; renderActiveTab(); return; }
+  addCharFeat(key, null);
+};
+
+window.chooseFeatAbility = (ab) => addCharFeat(_pendingFeatKey, ab);
+
+window.cancelFeatPick = () => { _pendingFeatKey = null; renderActiveTab(); };
+
+window.filterFeatPicker = () => renderFeatPickerResults();
+
+window.removeCharFeat = (i) => {
+  const feats = [...(char.feats || [])];
+  const entry = feats[i];
+  if (!entry) return;
+  feats.splice(i, 1);
+  const patch = { feats };
+  if (entry.ability && entry.applied) {
+    const scores = { ...char.ability_scores };
+    scores[entry.ability] = (scores[entry.ability] ?? 10) - entry.applied;
+    patch.ability_scores = scores;
+  }
+  save(patch).then(() => renderActiveTab());
+  log('feat', `Removed feat: ${featsData?.[entry.key]?.name || entry.key}`);
 };
 
 window.addFeat = () => {

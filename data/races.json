@@ -507,6 +507,7 @@
   "bonusSkills": {
    "count": 1
   },
+  "bonusFeat": true,
   "subrace_of": "Human"
  },
  "tiefling": {
